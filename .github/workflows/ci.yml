@@ -1,0 +1,204 @@
+name: CI & Deploy
+
+on:
+    push:
+        branches: [main]
+    pull_request:
+
+# Sur une PR, un nouveau push annule le run précédent. Sur main, on n'annule
+# jamais un run en cours : il peut être en train de déployer.
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+    PHP_VERSION: '8.4'
+    SSH_HOST: ${{ vars.SSH_HOST }}
+    SSH_USER: ${{ vars.SSH_USER }}
+    SSH_PORT: ${{ vars.SSH_PORT }}
+    APP_DIR: ${{ vars.APP_DIR }}
+    # Binaire PHP CLI sur le serveur. Sur le mutualisé Infomaniak, `php` seul peut
+    # pointer sur une version plus ancienne que celle du site.
+    REMOTE_PHP: ${{ vars.REMOTE_PHP || 'php' }}
+
+jobs:
+    test:
+        name: Lint, PHPStan, PHPUnit
+        runs-on: ubuntu-latest
+
+        services:
+            database:
+                image: mariadb:11.4
+                env:
+                    MARIADB_DATABASE: db
+                    MARIADB_USER: db
+                    MARIADB_PASSWORD: db
+                    MARIADB_ROOT_PASSWORD: root
+                ports:
+                    - 3306:3306
+                options: >-
+                    --health-cmd "healthcheck.sh --connect --innodb_initialized"
+                    --health-interval 5s
+                    --health-timeout 5s
+                    --health-retries 10
+
+        steps:
+            - uses: actions/checkout@v5
+
+            - uses: shivammathur/setup-php@v2
+              with:
+                  php-version: ${{ env.PHP_VERSION }}
+                  extensions: ctype, iconv, intl, pdo_mysql
+                  coverage: none
+                  tools: composer:v2
+
+            - name: Validate composer.json
+              run: composer validate --strict --no-check-publish
+
+            - name: Get Composer cache directory
+              id: composer-cache
+              run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
+
+            - uses: actions/cache@v4
+              with:
+                  path: ${{ steps.composer-cache.outputs.dir }}
+                  key: composer-${{ hashFiles('composer.lock') }}
+                  restore-keys: composer-
+
+            - name: Install dependencies
+              run: composer install --no-interaction --no-progress --prefer-dist
+
+            - name: Lint
+              run: |
+                  bin/console lint:container
+                  bin/console lint:yaml config --parse-tags
+                  bin/console lint:twig templates
+                  bin/console doctrine:schema:validate --skip-sync
+
+            - name: PHPStan
+              run: vendor/bin/phpstan analyse --no-progress --error-format=github
+
+            - name: Prepare test database
+              run: |
+                  docker exec -i ${{ job.services.database.id }} mariadb -uroot -proot < docker/mariadb/init/01-test-database.sql
+                  bin/console doctrine:database:create --env=test --if-not-exists
+                  bin/console doctrine:migrations:migrate --env=test --no-interaction --allow-no-migration
+
+            - name: PHPUnit
+              run: bin/phpunit
+
+    build:
+        name: Build release
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v5
+
+            - uses: shivammathur/setup-php@v2
+              with:
+                  php-version: ${{ env.PHP_VERSION }}
+                  extensions: ctype, iconv, intl, pdo_mysql
+                  coverage: none
+                  tools: composer:v2
+
+            - name: Get Composer cache directory
+              id: composer-cache
+              run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
+
+            - uses: actions/cache@v4
+              with:
+                  path: ${{ steps.composer-cache.outputs.dir }}
+                  key: composer-${{ hashFiles('composer.lock') }}
+                  restore-keys: composer-
+
+            # --no-scripts : les auto-scripts lancent cache:clear, qui compilerait le
+            # conteneur avec les chemins absolus du runner. Le cache prod est construit
+            # sur le serveur, à la fin du déploiement.
+            - name: Install production dependencies
+              run: composer install --no-dev --no-interaction --no-progress --prefer-dist --optimize-autoloader --no-scripts
+              env:
+                  APP_ENV: prod
+
+            - name: Compile assets
+              run: |
+                  bin/console assets:install public --no-interaction
+                  bin/console importmap:install --no-interaction
+                  bin/console asset-map:compile --no-interaction
+              env:
+                  APP_ENV: prod
+                  APP_DEBUG: '0'
+
+            # L'archive est écrite hors du dossier archivé, sinon tar échoue avec
+            # "file changed as we read it".
+            - name: Package release
+              run: |
+                  tar -czf "$RUNNER_TEMP/release.tar.gz" \
+                    --exclude='./.git' \
+                    --exclude='./.github' \
+                    --exclude='./.idea' \
+                    --exclude='./docker' \
+                    --exclude='./var' \
+                    --exclude='./tests' \
+                    .
+
+            - uses: actions/upload-artifact@v4
+              with:
+                  name: release
+                  path: ${{ runner.temp }}/release.tar.gz
+                  retention-days: 5
+
+    deploy:
+        name: Deploy production
+        needs: [test, build]
+        runs-on: ubuntu-latest
+        # Seulement sur un push sur main, et tant que le serveur n'est pas configuré
+        # (variable SSH_HOST absente), le job est ignoré.
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.SSH_HOST != ''
+        # Gate manuel : le job reste en "Waiting" jusqu'à l'approbation dans
+        # l'onglet Actions (reviewers configurés sur l'environnement production).
+        environment:
+            name: production
+            url: ${{ vars.APP_URL }}
+        # Un nouveau push sur main annule un déploiement encore en attente
+        # d'approbation, au lieu de le laisser s'empiler.
+        concurrency:
+            group: deploy-production
+            cancel-in-progress: true
+        steps:
+            - uses: actions/download-artifact@v4
+              with:
+                  name: release
+
+            - name: Unpack release
+              run: |
+                  mkdir -p release
+                  tar -xzf release.tar.gz -C release
+
+            - name: Configure SSH
+              run: |
+                  install -m 700 -d ~/.ssh
+                  install -m 600 /dev/stdin ~/.ssh/id_deploy <<< "${{ secrets.SSH_PRIVATE_KEY }}"
+                  ssh-keyscan -p "$SSH_PORT" -H "$SSH_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+
+            # -rlptz et non -a : -a implique -og (owner/group), refusé sur mutualisé.
+            # --delete nettoie les fichiers supprimés du dépôt, les chemins --exclude
+            # restent protégés (pas de --delete-excluded).
+            - name: Sync code
+              run: |
+                  rsync -rlptz --delete \
+                    --exclude='.env.local' \
+                    --exclude='var/' \
+                    -e "ssh -i ~/.ssh/id_deploy -p $SSH_PORT" \
+                    release/ "$SSH_USER@$SSH_HOST:$APP_DIR/"
+
+            - name: Prod cache and migrations
+              run: |
+                  ssh -i ~/.ssh/id_deploy -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" \
+                    "set -e; cd '$APP_DIR'; \
+                     export APP_ENV=prod APP_DEBUG=0; \
+                     $REMOTE_PHP bin/console cache:clear --no-interaction; \
+                     $REMOTE_PHP bin/console cache:warmup --no-interaction; \
+                     $REMOTE_PHP bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration"
+
+            - name: Cleanup SSH key
+              if: always()
+              run: rm -f ~/.ssh/id_deploy
