@@ -1,0 +1,47 @@
+{% extends '@EasyAdmin/page/content.html.twig' %}
+
+{% block content_title %}Importer un artiste{% endblock %}
+
+{% block main %}
+    <form method="get" class="d-flex gap-2 mb-4">
+        <input type="search" name="q" value="{{ query }}" placeholder="Nom de l'artiste sur MusicBrainz" class="form-control" autofocus>
+        <twig:ea:Button type="submit" variant="primary">Chercher</twig:ea:Button>
+    </form>
+
+    {% if query is not empty %}
+        {% if results is empty %}
+            <twig:ea:Alert variant="info">Aucun artiste trouvé pour « {{ query }} ».</twig:ea:Alert>
+        {% else %}
+            <table class="table datagrid">
+                <thead>
+                    <tr>
+                        <th>Nom</th>
+                        <th>Précision</th>
+                        <th>Pays</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for result in results %}
+                        <tr>
+                            <td>{{ result.data.name }}</td>
+                            <td>{{ result.data.disambiguation }}</td>
+                            <td>{{ result.data.country }}</td>
+                            <td class="text-end">
+                                {% if result.artist %}
+                                    <a href="{{ path('admin_artist_detail', {entityId: result.artist.id}) }}">Déjà importé</a>
+                                {% else %}
+                                    <form method="post" action="{{ path('admin_artist_import_start') }}">
+                                        <input type="hidden" name="externalId" value="{{ result.data.externalId }}">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('artist-import') }}">
+                                        <twig:ea:Button type="submit" variant="primary">Importer</twig:ea:Button>
+                                    </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+    {% endif %}
+{% endblock %}

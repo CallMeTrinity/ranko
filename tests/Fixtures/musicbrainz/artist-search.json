@@ -1,0 +1,23 @@
+{
+  "created": "2026-10-10T21:07:17.104Z",
+  "count": 2,
+  "offset": 0,
+  "artists": [
+    {
+      "id": "a74b1b7f-71a5-4011-9441-d0b5e4122711",
+      "type": "Group",
+      "score": 100,
+      "name": "Radiohead",
+      "sort-name": "Radiohead",
+      "country": "GB"
+    },
+    {
+      "id": "c74f4726-2671-4011-81b6-f70da905c05a",
+      "type": "Group",
+      "score": 64,
+      "name": "On a Friday",
+      "sort-name": "On a Friday",
+      "disambiguation": "pre‐Radiohead group, until 1991"
+    }
+  ]
+}

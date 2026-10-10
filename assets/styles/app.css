@@ -1,3 +1,9 @@
-body {
-    background-color: skyblue;
+@import "tailwindcss";
+
+/*
+ * Tokens de design : à remplir avec la charte (couleurs, typo, rayons...).
+ * Pour l'instant les templates n'utilisent que des utilitaires de mise en page
+ * (flex, grid, espacements, tailles), aucun style visuel.
+ */
+@theme {
 }

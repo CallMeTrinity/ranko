@@ -1,0 +1,38 @@
+# Clients HTTP des sources du catalogue.
+framework:
+    rate_limiter:
+        # MusicBrainz bloque au-delà d'une requête par seconde et par IP. Le limiter est
+        # stocké dans cache.rate_limiter et verrouillé via symfony/lock : il est partagé
+        # entre le worker Messenger et les requêtes web (recherche dans le back-office).
+        musicbrainz:
+            policy: token_bucket
+            limit: 1
+            rate: { interval: '1 second', amount: 1 }
+
+    http_client:
+        scoped_clients:
+            musicbrainz.client:
+                base_uri: 'https://musicbrainz.org/ws/2/'
+                headers:
+                    # Obligatoire : MusicBrainz rejette les clients sans User-Agent identifiable.
+                    User-Agent: '%env(MUSICBRAINZ_USER_AGENT)%'
+                    Accept: 'application/json'
+                rate_limiter: musicbrainz
+                # 503 "server busy" quand on dépasse la limite : on réessaie avec backoff.
+                retry_failed:
+                    max_retries: 3
+                    delay: 1000
+                    multiplier: 2
+            cover_art_archive.client:
+                base_uri: 'https://coverartarchive.org/'
+                headers:
+                    User-Agent: '%env(MUSICBRAINZ_USER_AGENT)%'
+                    Accept: 'application/json'
+
+when@test:
+    framework:
+        rate_limiter:
+            musicbrainz:
+                policy: no_limit
+        http_client:
+            mock_response_factory: App\Tests\Fixtures\CatalogHttpMock

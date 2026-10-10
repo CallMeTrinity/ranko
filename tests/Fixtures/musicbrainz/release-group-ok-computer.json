@@ -1,0 +1,52 @@
+{
+  "secondary-type-ids": [],
+  "first-release-date": "1997-05-21",
+  "releases": [
+    {
+      "id": "00000000-0000-0000-0000-00000000b001",
+      "title": "OK Computer",
+      "status": "Bootleg",
+      "date": "1997-01-01",
+      "country": null,
+      "disambiguation": "fixture: bootleg plus ancien, doit être ignoré"
+    },
+    {
+      "id": "425d8db9-88a3-31e2-bd23-b1a967626dd5",
+      "title": "OK Computer",
+      "status": "Official",
+      "date": "1997-06-16",
+      "country": "XE",
+      "disambiguation": "UDEN"
+    },
+    {
+      "id": "52709206-8816-3c12-9ff6-f957f2f1eecf",
+      "title": "OK Computer",
+      "status": "Official",
+      "date": "1997-06-16",
+      "country": "XE",
+      "disambiguation": "EMI UDEN, made in Italy, printed in Italy"
+    },
+    {
+      "id": "1834eae1-741b-3c03-9ca5-0df3decb43ea",
+      "title": "OK Computer",
+      "status": "Official",
+      "date": "1997-05-21",
+      "country": "JP",
+      "disambiguation": ""
+    },
+    {
+      "id": "00000000-0000-0000-0000-00000000d001",
+      "title": "OK Computer",
+      "status": "Official",
+      "date": "",
+      "country": null,
+      "disambiguation": "fixture: sans date, doit passer après les datées"
+    }
+  ],
+  "title": "OK Computer",
+  "disambiguation": "",
+  "id": "b1392450-e666-3926-a536-22c65f834433",
+  "secondary-types": [],
+  "primary-type": "Album",
+  "primary-type-id": "f529b476-6e62-324f-b0aa-1f3e33d313fc"
+}

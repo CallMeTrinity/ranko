@@ -1,0 +1,64 @@
+{
+  "release-group-count": 5,
+  "release-group-offset": 0,
+  "release-groups": [
+    {
+      "primary-type-id": "6d0c5bf6-7a33-3420-a519-44fc63eedebf",
+      "id": "99445a2b-578a-321e-851e-c6539bfbbd7f",
+      "disambiguation": "",
+      "first-release-date": "1994-09-24",
+      "primary-type": "EP",
+      "secondary-type-ids": [],
+      "secondary-types": [],
+      "title": "My Iron Lung"
+    },
+    {
+      "primary-type-id": "f529b476-6e62-324f-b0aa-1f3e33d313fc",
+      "id": "b1392450-e666-3926-a536-22c65f834433",
+      "disambiguation": "",
+      "first-release-date": "1997-05-21",
+      "secondary-types": [],
+      "secondary-type-ids": [],
+      "primary-type": "Album",
+      "title": "OK Computer"
+    },
+    {
+      "disambiguation": "",
+      "first-release-date": "2000-08-03",
+      "primary-type": "Album",
+      "secondary-type-ids": [],
+      "secondary-types": [],
+      "title": "Kid A",
+      "primary-type-id": "f529b476-6e62-324f-b0aa-1f3e33d313fc",
+      "id": "e75c0549-ad55-39e3-8025-c72c5d4a3c5d"
+    },
+    {
+      "secondary-type-ids": [
+        "6fd474e2-6b58-3102-9d17-d6f7eb7da0a0"
+      ],
+      "secondary-types": [
+        "Live"
+      ],
+      "primary-type": "Album",
+      "title": "27 5 94: The Astoria London Live",
+      "disambiguation": "",
+      "first-release-date": "1995-05-17",
+      "id": "0ef22186-e92d-4f03-9b05-500fa2d581ad",
+      "primary-type-id": "f529b476-6e62-324f-b0aa-1f3e33d313fc"
+    },
+    {
+      "disambiguation": "Pablo Honey / The Bends / OK Computer / Kid A / Amnesiac",
+      "first-release-date": "2012-10-12",
+      "primary-type": "Album",
+      "secondary-type-ids": [
+        "dd2a21e1-0c00-3729-a7a0-de60b84eb5d1"
+      ],
+      "secondary-types": [
+        "Compilation"
+      ],
+      "title": "5 Album Set",
+      "primary-type-id": "f529b476-6e62-324f-b0aa-1f3e33d313fc",
+      "id": "30f765ef-d7f0-4cce-8a3b-d6e1069f1dda"
+    }
+  ]
+}
