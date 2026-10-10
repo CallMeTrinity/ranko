@@ -1,0 +1,13 @@
+{# Carte de classement dans une liste. Variables : ranking, top (premiers éléments) #}
+<article class="flex flex-col gap-2 border p-4">
+    <h3><a href="{{ path('app_ranking_show', {id: ranking.id}) }}">{{ ranking.title }}</a></h3>
+    <p class="text-sm">
+        par <a href="{{ path('app_profile', {username: ranking.owner.username}) }}">{{ ranking.owner.username }}</a>
+        · {{ ranking.entries|length }} éléments
+    </p>
+    {% if top is not empty %}
+        <ol class="list-decimal pl-5 text-sm">
+            {% for item in top %}<li class="truncate">{{ item.name }}</li>{% endfor %}
+        </ol>
+    {% endif %}
+</article>

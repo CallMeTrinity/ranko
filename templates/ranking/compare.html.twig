@@ -1,0 +1,46 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Comparaison · Ranko{% endblock %}
+
+{% block body %}
+    <nav class="mb-4 text-sm">
+        <a href="{{ path('app_ranking_show', {id: first.id}) }}">{{ first.title }} ({{ first.owner.username }})</a>
+        vs
+        <a href="{{ path('app_ranking_show', {id: second.id}) }}">{{ second.title }} ({{ second.owner.username }})</a>
+    </nav>
+
+    <h1 class="mb-6 text-2xl">{{ first.owner.username }} et {{ second.owner.username }}</h1>
+
+    {% if not result.meaningful %}
+        <p>Il faut au moins deux éléments en commun pour comparer ces classements ({{ result.commonIds|length }} en commun).</p>
+    {% else %}
+        <section class="mb-8 flex flex-col gap-2" aria-labelledby="agreement-title">
+            <h2 id="agreement-title" class="text-4xl">{{ (result.agreement * 100)|round }} % d'accord</h2>
+            <p>
+                Sur les {{ result.commonIds|length }} éléments en commun, {{ result.concordant }} paires sur {{ result.pairs }}
+                sont classées dans le même ordre (τ de Kendall = {{ result.tau|number_format(2, ',') }}).
+            </p>
+        </section>
+
+        <table class="w-full">
+            <thead>
+                <tr>
+                    <th scope="col" class="text-left">Élément</th>
+                    <th scope="col" class="text-right">{{ first.owner.username }}</th>
+                    <th scope="col" class="text-right">{{ second.owner.username }}</th>
+                    <th scope="col" class="text-right">Écart</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in rows %}
+                    <tr class="border-t">
+                        <td class="py-2">{{ row.item.name }}</td>
+                        <td class="text-right">{{ row.first }}</td>
+                        <td class="text-right">{{ row.second }}</td>
+                        <td class="text-right">{{ row.second - row.first > 0 ? '+' }}{{ row.second - row.first }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+{% endblock %}

@@ -4,9 +4,12 @@ namespace App\Repository;
 
 use App\Entity\CatalogItem;
 use App\Entity\Ranking;
+use App\Entity\RankingEntry;
 use App\Entity\User;
 use App\Enum\CatalogItemKind;
+use App\Enum\Visibility;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -30,7 +33,123 @@ class RankingRepository extends ServiceEntityRepository
      */
     public function findByOwner(User $owner): array
     {
-        return $this->findBy(['owner' => $owner], ['updatedAt' => 'DESC']);
+        return $this->createQueryBuilder('ranking')
+            ->addSelect('scope')
+            ->leftJoin('ranking.scope', 'scope')
+            ->andWhere('ranking.owner = :owner')
+            ->setParameter('owner', $owner)
+            ->orderBy('ranking.updatedAt', 'DESC')
+            ->getQuery()->getResult();
+    }
+
+    /**
+     * Derniers classements publics non vides, du plus récemment modifié au plus ancien.
+     *
+     * @return list<Ranking>
+     */
+    public function findLatestPublic(?CatalogItemKind $kind = null, int $limit = 30): array
+    {
+        $qb = $this->publicQueryBuilder()->setMaxResults($limit);
+        if (null !== $kind) {
+            $qb->andWhere('ranking.itemKind = :kind')->setParameter('kind', $kind);
+        }
+
+        return $qb->getQuery()->getResult();
+    }
+
+    /**
+     * @return list<Ranking>
+     */
+    public function findPublicByOwner(User $owner): array
+    {
+        return $this->publicQueryBuilder()
+            ->andWhere('ranking.owner = :owner')
+            ->setParameter('owner', $owner)
+            ->getQuery()->getResult();
+    }
+
+    /**
+     * Classements publics de la communauté portant sur cet artiste ou cet album.
+     *
+     * @return list<Ranking>
+     */
+    public function findPublicByScope(CatalogItem $scope, int $limit = 10): array
+    {
+        return $this->publicQueryBuilder()
+            ->andWhere('ranking.scope = :scope')
+            ->setParameter('scope', $scope)
+            ->setMaxResults($limit)
+            ->getQuery()->getResult();
+    }
+
+    /**
+     * Classements de l'utilisateur comparables à celui-ci (même type d'élément), celui
+     * de même périmètre en premier.
+     *
+     * @return list<Ranking>
+     */
+    public function findComparable(User $user, Ranking $ranking): array
+    {
+        $rankings = $this->createQueryBuilder('ranking')
+            ->andWhere('ranking.owner = :owner')
+            ->andWhere('ranking.itemKind = :kind')
+            ->andWhere('ranking != :ranking')
+            ->setParameter('owner', $user)
+            ->setParameter('kind', $ranking->getItemKind())
+            ->setParameter('ranking', $ranking)
+            ->orderBy('ranking.updatedAt', 'DESC')
+            ->getQuery()->getResult();
+
+        usort($rankings, static fn (Ranking $a, Ranking $b): int => ($b->getScope() === $ranking->getScope()) <=> ($a->getScope() === $ranking->getScope()));
+
+        return $rankings;
+    }
+
+    /**
+     * Les premiers éléments de chaque classement, en une seule requête pour toute la liste.
+     *
+     * @param list<Ranking> $rankings
+     *
+     * @return array<int, list<CatalogItem>> indexé par id de classement
+     */
+    public function findTopItems(array $rankings, int $limit = 3): array
+    {
+        if ([] === $rankings) {
+            return [];
+        }
+
+        /** @var list<RankingEntry> $entries */
+        $entries = $this->getEntityManager()->createQueryBuilder()
+            ->select('entry', 'item')
+            ->from(RankingEntry::class, 'entry')
+            ->join('entry.item', 'item')
+            ->andWhere('entry.ranking IN (:rankings)')
+            ->andWhere('entry.position <= :limit')
+            ->setParameter('rankings', $rankings)
+            ->setParameter('limit', $limit)
+            ->orderBy('entry.position')
+            ->getQuery()->getResult();
+
+        $tops = [];
+        foreach ($entries as $entry) {
+            $tops[(int) $entry->getRanking()->getId()][] = $entry->getItem();
+        }
+
+        return $tops;
+    }
+
+    private function publicQueryBuilder(): QueryBuilder
+    {
+        // Fetch join du périmètre : le titre l'affiche, et une association vers la racine
+        // d'héritage serait sinon chargée par une requête par classement.
+        return $this->createQueryBuilder('ranking')
+            ->addSelect('owner', 'scope')
+            ->join('ranking.owner', 'owner')
+            ->leftJoin('ranking.scope', 'scope')
+            ->andWhere('ranking.visibility = :public')
+            ->andWhere('SIZE(ranking.entries) > 0')
+            ->setParameter('public', Visibility::Public)
+            ->orderBy('ranking.updatedAt', 'DESC');
     }
 
     /**

@@ -7,6 +7,7 @@ use App\Entity\Artist;
 use App\Enum\CatalogItemKind;
 use App\Repository\ArtistRepository;
 use App\Repository\CatalogItemRepository;
+use App\Repository\RankingRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\MapQueryParameter;
@@ -29,7 +30,7 @@ final class CatalogController extends AbstractController
     }
 
     #[Route('/artists/{id<\d+>}', name: 'app_artist_show', methods: ['GET'])]
-    public function artist(Artist $artist): Response
+    public function artist(Artist $artist, RankingRepository $rankings): Response
     {
         if (!$artist->isVisible()) {
             throw $this->createNotFoundException();
@@ -38,11 +39,12 @@ final class CatalogController extends AbstractController
         return $this->render('catalog/artist.html.twig', [
             'artist' => $artist,
             'albums' => $this->catalog->findRankable(CatalogItemKind::Album, $artist),
+            'community_rankings' => $rankings->findPublicByScope($artist),
         ]);
     }
 
     #[Route('/albums/{id<\d+>}', name: 'app_album_show', methods: ['GET'])]
-    public function album(Album $album): Response
+    public function album(Album $album, RankingRepository $rankings): Response
     {
         if (!$album->isVisible()) {
             throw $this->createNotFoundException();
@@ -51,6 +53,7 @@ final class CatalogController extends AbstractController
         return $this->render('catalog/album.html.twig', [
             'album' => $album,
             'tracks' => $this->catalog->findRankable(CatalogItemKind::Track, $album),
+            'community_rankings' => $rankings->findPublicByScope($album),
         ]);
     }
 }

@@ -9,6 +9,7 @@ use App\Duel\DuelManager;
 use App\Entity\CatalogItem;
 use App\Entity\Ranking;
 use App\Entity\User;
+use App\Ranking\Comparison\RankingComparator;
 use App\Ranking\RankingManager;
 use App\Repository\CatalogItemRepository;
 use App\Repository\RankingRepository;
@@ -78,14 +79,36 @@ final class RankingController extends AbstractController
 
     #[Route('/{id<\d+>}', name: 'app_ranking_show', methods: ['GET'])]
     #[IsGranted(RankingVoter::VIEW, 'ranking')]
-    public function show(#[MapEntity(expr: 'repository.findWithItems(id)')] Ranking $ranking, DuelManager $duels): Response
+    public function show(#[MapEntity(expr: 'repository.findWithItems(id)')] Ranking $ranking, DuelManager $duels, RankingRepository $rankings): Response
     {
         $canEdit = $this->isGranted(RankingVoter::EDIT, $ranking);
+        $viewer = $this->getUser();
 
         return $this->render('ranking/show.html.twig', [
             'ranking' => $ranking,
             'missing_items' => $canEdit ? $this->manager->findMissingItems($ranking) : [],
             'active_duel' => $canEdit ? $duels->findActive($ranking) : null,
+            // Un visiteur connecté peut confronter ce classement aux siens du même type.
+            'comparable' => $viewer instanceof User && !$canEdit ? $rankings->findComparable($viewer, $ranking) : [],
+        ]);
+    }
+
+    #[Route('/{id<\d+>}/compare/{otherId<\d+>}', name: 'app_ranking_compare', methods: ['GET'])]
+    #[IsGranted(RankingVoter::VIEW, 'ranking')]
+    #[IsGranted(RankingVoter::VIEW, 'other')]
+    public function compare(
+        #[MapEntity(expr: 'repository.findWithItems(id)')] Ranking $ranking,
+        #[MapEntity(expr: 'repository.findWithItems(otherId)')] Ranking $other,
+        RankingComparator $comparator,
+    ): Response {
+        if ($ranking->getItemKind() !== $other->getItemKind()) {
+            throw $this->createNotFoundException('On ne compare que des classements du même type.');
+        }
+
+        return $this->render('ranking/compare.html.twig', [
+            'first' => $ranking,
+            'second' => $other,
+            ...$comparator->compare($ranking, $other),
         ]);
     }
 

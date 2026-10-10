@@ -1,0 +1,14 @@
+{# Classements publics portant sur un artiste ou un album. Variables : community_rankings #}
+{% if community_rankings is not empty %}
+    <section class="mt-10" aria-labelledby="community-title">
+        <h2 id="community-title" class="mb-4 text-xl">Classements de la communauté</h2>
+        <ul class="flex flex-col divide-y">
+            {% for ranking in community_rankings %}
+                <li class="flex flex-wrap items-center gap-x-4 py-2">
+                    <a href="{{ path('app_ranking_show', {id: ranking.id}) }}" class="flex-1">{{ ranking.title }}</a>
+                    <a href="{{ path('app_profile', {username: ranking.owner.username}) }}" class="text-sm">{{ ranking.owner.username }}</a>
+                </li>
+            {% endfor %}
+        </ul>
+    </section>
+{% endif %}

@@ -33,8 +33,13 @@ class Ranking
     #[ORM\Column]
     private \DateTimeImmutable $updatedAt;
 
-    /** @var Collection<int, RankingEntry> */
-    #[ORM\OneToMany(targetEntity: RankingEntry::class, mappedBy: 'ranking', cascade: ['persist'], orphanRemoval: true)]
+    /**
+     * EXTRA_LAZY : compter les entrées d'un classement dans une liste fait un COUNT
+     * au lieu de charger toute la collection.
+     *
+     * @var Collection<int, RankingEntry>
+     */
+    #[ORM\OneToMany(targetEntity: RankingEntry::class, mappedBy: 'ranking', cascade: ['persist'], orphanRemoval: true, fetch: 'EXTRA_LAZY')]
     #[ORM\OrderBy(['position' => 'ASC'])]
     private Collection $entries;
 

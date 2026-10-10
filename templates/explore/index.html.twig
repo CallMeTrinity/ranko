@@ -1,0 +1,20 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Explorer · Ranko{% endblock %}
+
+{% block body %}
+    <h1 class="mb-4 text-2xl">Classements de la communauté</h1>
+
+    <nav class="mb-6 flex flex-wrap gap-2" aria-label="Filtrer par type">
+        <a href="{{ path('app_explore') }}" class="border px-3 py-1" {% if kind is null %}aria-current="page"{% endif %}>Tout</a>
+        {% for k in kinds %}
+            <a href="{{ path('app_explore', {kind: k.value}) }}" class="border px-3 py-1" {% if kind == k %}aria-current="page"{% endif %}>{{ k.label }}</a>
+        {% endfor %}
+    </nav>
+
+    {% if rankings is empty %}
+        <p>Aucun classement public pour l'instant.</p>
+    {% else %}
+        {{ include('ranking/_list.html.twig') }}
+    {% endif %}
+{% endblock %}

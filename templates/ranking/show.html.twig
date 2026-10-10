@@ -5,14 +5,48 @@
 
 {% block title %}{{ ranking.title }} · Ranko{% endblock %}
 
+{% block meta %}
+    {% if ranking.public %}
+        {# Aperçu du lien de partage dans les messageries et réseaux sociaux. #}
+        {% set top = ranking.items|slice(0, 3) %}
+        {% set first = top|first %}
+        <meta property="og:type" content="website">
+        <meta property="og:title" content="{{ ranking.title }} · par {{ ranking.owner.username }}">
+        <meta property="og:description" content="{% for item in top %}{{ loop.index }}. {{ item.name }}{{ not loop.last ? ' · ' }}{% endfor %}">
+        <meta property="og:url" content="{{ url('app_ranking_show', {id: ranking.id}) }}">
+        {% if first and first.kind.value != 'artist' %}
+            {% set cover = first.kind.value == 'album' ? first.coverUrl : first.album.coverUrl %}
+            {% if cover %}<meta property="og:image" content="{{ cover }}">{% endif %}
+        {% endif %}
+    {% endif %}
+{% endblock %}
+
 {% block body %}
     <header class="mb-6 flex flex-col gap-4">
         <div>
             <h1 class="text-3xl">{{ ranking.title }}</h1>
             <p class="text-sm">
-                par {{ ranking.owner.username }} · {{ ranking.visibility.label }} · mis à jour le {{ ranking.updatedAt|date('d/m/Y') }}
+                par <a href="{{ path('app_profile', {username: ranking.owner.username}) }}">{{ ranking.owner.username }}</a> · {{ ranking.visibility.label }} · mis à jour le {{ ranking.updatedAt|date('d/m/Y') }}
             </p>
         </div>
+
+        {% if ranking.public %}
+            <div data-controller="clipboard" data-clipboard-text-value="{{ url('app_ranking_show', {id: ranking.id}) }}" class="flex flex-wrap items-center gap-2">
+                <input type="text" readonly value="{{ url('app_ranking_show', {id: ranking.id}) }}" aria-label="Lien de partage" class="flex-1 border px-2 py-1">
+                <button type="button" class="border px-3 py-1" data-action="clipboard#copy" data-clipboard-target="button">Copier le lien</button>
+            </div>
+        {% elseif can_edit %}
+            <p class="text-sm">Ce classement est privé : rends-le public pour le partager.</p>
+        {% endif %}
+
+        {% if comparable is not empty %}
+            <div class="flex flex-wrap items-center gap-2">
+                <span>Comparer avec :</span>
+                {% for mine in comparable %}
+                    <a href="{{ path('app_ranking_compare', {id: mine.id, otherId: ranking.id}) }}" class="border px-3 py-1">{{ mine.title }}</a>
+                {% endfor %}
+            </div>
+        {% endif %}
 
         {% if can_edit %}
             <div class="flex flex-wrap gap-2">

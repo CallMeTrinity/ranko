@@ -12,4 +12,14 @@
             <a href="{{ path('app_register') }}" class="border px-4 py-2">Créer un compte</a>
         {% endif %}
     </div>
+
+    {% if rankings is not empty %}
+        <section class="mt-10" aria-labelledby="latest-title">
+            <div class="mb-4 flex items-baseline justify-between gap-4">
+                <h2 id="latest-title" class="text-xl">Derniers classements publics</h2>
+                <a href="{{ path('app_explore') }}" class="text-sm">Tout voir</a>
+            </div>
+            {{ include('ranking/_list.html.twig') }}
+        </section>
+    {% endif %}
 {% endblock %}

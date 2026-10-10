@@ -1,0 +1,20 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ profile.username }} · Ranko{% endblock %}
+
+{% block body %}
+    <header class="mb-6 flex flex-col gap-3">
+        <h1 class="text-3xl">{{ profile.username }}</h1>
+        <p class="text-sm">Membre depuis {{ profile.createdAt|date('m/Y') }}</p>
+        <div data-controller="clipboard" data-clipboard-text-value="{{ url('app_profile', {username: profile.username}) }}" class="flex flex-wrap items-center gap-2">
+            <button type="button" class="border px-3 py-1" data-action="clipboard#copy" data-clipboard-target="button">Copier le lien du profil</button>
+        </div>
+    </header>
+
+    <h2 class="mb-4 text-xl">Classements publics</h2>
+    {% if rankings is empty %}
+        <p>Aucun classement public{% if app.user and app.user.id == profile.id %}. Tes classements privés n'apparaissent pas ici{% endif %}.</p>
+    {% else %}
+        {{ include('ranking/_list.html.twig') }}
+    {% endif %}
+{% endblock %}
