@@ -1,0 +1,40 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ artist.name }} · Ranko{% endblock %}
+
+{% block body %}
+    <nav class="mb-4 text-sm"><a href="{{ path('app_artist_index') }}">Artistes</a> › {{ artist.name }}</nav>
+
+    <header class="mb-8 flex flex-col gap-4">
+        <div>
+            <h1 class="text-3xl">{{ artist.name }}</h1>
+            {% if artist.disambiguation %}<p>{{ artist.disambiguation }}</p>{% endif %}
+        </div>
+        <div class="flex flex-wrap gap-2">
+            {{ include('ranking/_create_button.html.twig', {kind: 'album', scope: artist, label: 'Classer ses albums'}) }}
+            {{ include('ranking/_create_button.html.twig', {kind: 'track', scope: artist, label: 'Classer tous ses titres'}) }}
+            {{ include('ranking/_add_button.html.twig', {item: artist, label: 'Ajouter à mon top artistes'}) }}
+        </div>
+    </header>
+
+    <h2 class="mb-4 text-xl">Discographie</h2>
+    {% if albums is empty %}
+        <p>Aucun album pour l'instant.</p>
+    {% else %}
+        <ul class="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-4">
+            {% for album in albums %}
+                <li class="flex flex-col gap-2">
+                    <a href="{{ path('app_album_show', {id: album.id}) }}" class="flex flex-col gap-2">
+                        {% if album.coverUrl %}
+                            <img src="{{ album.coverUrl }}" alt="" loading="lazy" class="aspect-square w-full object-cover">
+                        {% else %}
+                            <div class="aspect-square w-full border" aria-hidden="true"></div>
+                        {% endif %}
+                        <span>{{ album.name }}</span>
+                    </a>
+                    <span class="text-sm">{{ album.type.label }}{% if album.releaseYear %} · {{ album.releaseYear }}{% endif %}</span>
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+{% endblock %}

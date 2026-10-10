@@ -1,0 +1,21 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mes classements · Ranko{% endblock %}
+
+{% block body %}
+    <h1 class="mb-6 text-2xl">Mes classements</h1>
+
+    {% if rankings is empty %}
+        <p>Aucun classement pour l'instant. Pars d'un <a href="{{ path('app_artist_index') }}" class="underline">artiste</a> pour en créer un.</p>
+    {% else %}
+        <ul class="flex flex-col divide-y">
+            {% for ranking in rankings %}
+                <li class="flex flex-wrap items-center gap-x-4 gap-y-1 py-3">
+                    <a href="{{ path('app_ranking_show', {id: ranking.id}) }}" class="flex-1">{{ ranking.title }}</a>
+                    <span class="text-sm">{{ ranking.entries|length }} éléments</span>
+                    <span class="text-sm">{{ ranking.visibility.label }}</span>
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+{% endblock %}

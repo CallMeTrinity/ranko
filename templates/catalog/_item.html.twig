@@ -1,0 +1,24 @@
+{# Un élément du catalogue sur une ligne : vignette, nom, contexte. Variables : item #}
+{% set kind = item.kind.value %}
+{% set cover = kind == 'album' ? item.coverUrl : (kind == 'track' ? item.album.coverUrl : null) %}
+<div class="flex items-center gap-3 min-w-0">
+    {% if kind != 'artist' %}
+        {% if cover %}
+            <img src="{{ cover }}" alt="" width="48" height="48" loading="lazy" class="size-12 shrink-0 object-cover">
+        {% else %}
+            <div class="size-12 shrink-0 border" aria-hidden="true"></div>
+        {% endif %}
+    {% endif %}
+    <div class="min-w-0">
+        {% if kind == 'artist' %}
+            <a href="{{ path('app_artist_show', {id: item.id}) }}" class="block truncate">{{ item.name }}</a>
+            {% if item.disambiguation %}<span class="block truncate text-sm">{{ item.disambiguation }}</span>{% endif %}
+        {% elseif kind == 'album' %}
+            <a href="{{ path('app_album_show', {id: item.id}) }}" class="block truncate">{{ item.name }}</a>
+            <span class="block truncate text-sm">{{ item.artist.name }}{% if item.releaseYear %} · {{ item.releaseYear }}{% endif %}</span>
+        {% else %}
+            <span class="block truncate">{{ item.name }}</span>
+            <span class="block truncate text-sm"><a href="{{ path('app_album_show', {id: item.album.id}) }}">{{ item.album.name }}</a> · {{ item.album.artist.name }}</span>
+        {% endif %}
+    </div>
+</div>

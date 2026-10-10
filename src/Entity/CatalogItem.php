@@ -86,6 +86,20 @@ abstract class CatalogItem
         return $this;
     }
 
+    /**
+     * Visible si ni l'élément ni aucun de ses parents n'est masqué.
+     */
+    public function isVisible(): bool
+    {
+        for ($item = $this; null !== $item; $item = $item->getParent()) {
+            if ($item->isHidden()) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     public function getCreatedAt(): \DateTimeImmutable
     {
         return $this->createdAt;

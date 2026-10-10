@@ -1,0 +1,42 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ album.name }} · {{ album.artist.name }} · Ranko{% endblock %}
+
+{% block body %}
+    <nav class="mb-4 text-sm">
+        <a href="{{ path('app_artist_index') }}">Artistes</a> ›
+        <a href="{{ path('app_artist_show', {id: album.artist.id}) }}">{{ album.artist.name }}</a> ›
+        {{ album.name }}
+    </nav>
+
+    <header class="mb-8 flex flex-col gap-6 sm:flex-row">
+        {% if album.coverUrl %}
+            <img src="{{ album.coverUrl }}" alt="Pochette de {{ album.name }}" class="aspect-square w-full max-w-64 object-cover">
+        {% endif %}
+        <div class="flex flex-col gap-4">
+            <div>
+                <h1 class="text-3xl">{{ album.name }}</h1>
+                <p><a href="{{ path('app_artist_show', {id: album.artist.id}) }}">{{ album.artist.name }}</a>{% if album.releaseYear %} · {{ album.releaseYear }}{% endif %} · {{ album.type.label }}</p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+                {{ include('ranking/_create_button.html.twig', {kind: 'track', scope: album, label: 'Classer les titres de l\'album'}) }}
+                {{ include('ranking/_add_button.html.twig', {item: album, label: 'Ajouter à mon top albums'}) }}
+            </div>
+        </div>
+    </header>
+
+    {% if tracks is empty %}
+        <p>Titres pas encore importés.</p>
+    {% else %}
+        <ol class="flex flex-col divide-y">
+            {% for track in tracks %}
+                <li class="flex items-center gap-4 py-2">
+                    <span class="w-8 shrink-0 text-right">{{ track.position }}</span>
+                    <span class="flex-1 truncate">{{ track.name }}</span>
+                    <span class="shrink-0">{{ track.formattedDuration }}</span>
+                    {{ include('ranking/_add_button.html.twig', {item: track, label: '+ Top titres'}) }}
+                </li>
+            {% endfor %}
+        </ol>
+    {% endif %}
+{% endblock %}

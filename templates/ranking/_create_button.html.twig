@@ -1,0 +1,11 @@
+{# Ouvre (ou crée) le classement de l'utilisateur pour ce type et ce périmètre. Variables : kind, scope (nullable), label #}
+{% if app.user %}
+    <form method="post" action="{{ path('app_ranking_create') }}">
+        <input type="hidden" name="kind" value="{{ kind }}">
+        <input type="hidden" name="scopeId" value="{{ scope ? scope.id : '' }}">
+        <input type="hidden" name="_token" value="{{ csrf_token('ranking-create') }}">
+        <button type="submit" class="border px-3 py-1">{{ label }}</button>
+    </form>
+{% else %}
+    <a href="{{ path('app_login') }}" class="border px-3 py-1">{{ label }}</a>
+{% endif %}

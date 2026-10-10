@@ -15,4 +15,21 @@ class ArtistRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Artist::class);
     }
+
+    /**
+     * @return list<Artist>
+     */
+    public function findVisible(string $search = ''): array
+    {
+        $qb = $this->createQueryBuilder('artist')
+            ->andWhere('artist.hidden = false')
+            ->orderBy('artist.name');
+
+        if ('' !== $search) {
+            $qb->andWhere('artist.name LIKE :search')
+                ->setParameter('search', '%'.addcslashes($search, '%_\\').'%');
+        }
+
+        return $qb->getQuery()->getResult();
+    }
 }

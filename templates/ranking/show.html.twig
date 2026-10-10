@@ -1,0 +1,82 @@
+{% extends 'base.html.twig' %}
+
+{% set can_edit = is_granted('RANKING_EDIT', ranking) %}
+{% set token = csrf_token('ranking' ~ ranking.id) %}
+
+{% block title %}{{ ranking.title }} · Ranko{% endblock %}
+
+{% block body %}
+    <header class="mb-6 flex flex-col gap-4">
+        <div>
+            <h1 class="text-3xl">{{ ranking.title }}</h1>
+            <p class="text-sm">
+                par {{ ranking.owner.username }} · {{ ranking.visibility.label }} · mis à jour le {{ ranking.updatedAt|date('d/m/Y') }}
+            </p>
+        </div>
+
+        {% if can_edit %}
+            <div class="flex flex-wrap gap-2">
+                <form method="post" action="{{ path('app_ranking_visibility', {id: ranking.id}) }}">
+                    <input type="hidden" name="_token" value="{{ token }}">
+                    <button type="submit" class="border px-3 py-1">{{ ranking.public ? 'Rendre privé' : 'Rendre public' }}</button>
+                </form>
+                <form method="post" action="{{ path('app_ranking_delete', {id: ranking.id}) }}" data-turbo-confirm="Supprimer ce classement ?">
+                    <input type="hidden" name="_token" value="{{ token }}">
+                    <button type="submit" class="border px-3 py-1">Supprimer</button>
+                </form>
+            </div>
+        {% endif %}
+    </header>
+
+    {% if missing_items is not empty %}
+        <section class="mb-6 flex flex-col gap-3 border p-4" aria-labelledby="missing-title">
+            <h2 id="missing-title">{{ missing_items|length }} élément{{ missing_items|length > 1 ? 's' }} pas encore classé{{ missing_items|length > 1 ? 's' }}</h2>
+            <ul class="text-sm">
+                {% for item in missing_items %}<li>{{ item.name }}</li>{% endfor %}
+            </ul>
+            <div class="flex flex-wrap gap-2">
+                <form method="post" action="{{ path('app_ranking_append_missing', {id: ranking.id}) }}">
+                    <input type="hidden" name="_token" value="{{ token }}">
+                    <button type="submit" class="border px-3 py-1">Ajouter à la fin</button>
+                </form>
+            </div>
+        </section>
+    {% endif %}
+
+    {% set items = ranking.items %}
+    {% if items is empty %}
+        <p>Ce classement est vide.{% if can_edit and ranking.scope is null %} Ajoute des éléments depuis les pages <a href="{{ path('app_artist_index') }}" class="underline">artistes</a> et albums.{% endif %}</p>
+    {% elseif can_edit %}
+        <p class="mb-3 text-sm" data-sortable-status aria-live="polite">Glisse les éléments, ou utilise les flèches, pour changer l'ordre.</p>
+        <ol class="flex flex-col divide-y"
+            data-controller="sortable"
+            data-sortable-url-value="{{ path('app_ranking_order', {id: ranking.id}) }}"
+            data-sortable-token-value="{{ token }}">
+            {% for item in items %}
+                <li class="flex items-center gap-3 py-2" data-item-id="{{ item.id }}">
+                    <span class="cursor-grab select-none px-1" data-sortable-handle aria-hidden="true">⠿</span>
+                    <span class="w-8 shrink-0 text-right" data-sortable-position>{{ loop.index }}</span>
+                    <div class="flex-1 min-w-0">{{ include('catalog/_item.html.twig', {item: item}) }}</div>
+                    <div class="flex shrink-0 gap-1">
+                        <button type="button" class="border px-2" data-action="sortable#moveUp" aria-label="Monter {{ item.name }}">↑</button>
+                        <button type="button" class="border px-2" data-action="sortable#moveDown" aria-label="Descendre {{ item.name }}">↓</button>
+                        <form method="post" action="{{ path('app_ranking_remove_item', {id: ranking.id}) }}">
+                            <input type="hidden" name="itemId" value="{{ item.id }}">
+                            <input type="hidden" name="_token" value="{{ token }}">
+                            <button type="submit" class="border px-2" aria-label="Retirer {{ item.name }}">×</button>
+                        </form>
+                    </div>
+                </li>
+            {% endfor %}
+        </ol>
+    {% else %}
+        <ol class="flex flex-col divide-y">
+            {% for item in items %}
+                <li class="flex items-center gap-3 py-2">
+                    <span class="w-8 shrink-0 text-right">{{ loop.index }}</span>
+                    <div class="flex-1 min-w-0">{{ include('catalog/_item.html.twig', {item: item}) }}</div>
+                </li>
+            {% endfor %}
+        </ol>
+    {% endif %}
+{% endblock %}
