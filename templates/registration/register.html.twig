@@ -1,0 +1,19 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Inscription · Ranko{% endblock %}
+
+{% block body %}
+    <div class="mx-auto max-w-sm">
+        <h1 class="mb-6 text-2xl">Créer un compte</h1>
+
+        {{ form_start(form, {attr: {class: 'flex flex-col gap-4'}}) }}
+            {{ form_row(form.email) }}
+            {{ form_row(form.username) }}
+            {{ form_row(form.plainPassword.first) }}
+            {{ form_row(form.plainPassword.second) }}
+            <button type="submit" class="border px-4 py-2">S'inscrire</button>
+        {{ form_end(form) }}
+
+        <p class="mt-6">Déjà inscrit ? <a href="{{ path('app_login') }}" class="underline">Se connecter</a></p>
+    </div>
+{% endblock %}

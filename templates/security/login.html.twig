@@ -25,5 +25,7 @@
             <input type="hidden" name="_csrf_token" data-controller="csrf-protection" value="{{ csrf_token('authenticate') }}">
             <button type="submit" class="border px-4 py-2">Se connecter</button>
         </form>
+
+        <p class="mt-6">Pas encore de compte ? <a href="{{ path('app_register') }}" class="underline">S'inscrire</a></p>
     </div>
 {% endblock %}
