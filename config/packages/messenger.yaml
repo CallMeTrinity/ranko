@@ -6,9 +6,12 @@ framework:
             # https://symfony.com/doc/current/messenger.html#transport-configuration
             async:
                 dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                # Backoff large : un échec vient surtout d'un MusicBrainz surchargé (503).
+                # 5 s, 15 s, 45 s, puis transport "failed".
                 retry_strategy:
                     max_retries: 3
-                    multiplier: 2
+                    delay: 5000
+                    multiplier: 3
             failed: 'doctrine://default?queue_name=failed'
             # sync: 'sync://'
 

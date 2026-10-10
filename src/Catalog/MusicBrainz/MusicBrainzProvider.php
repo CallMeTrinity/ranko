@@ -12,13 +12,15 @@ use App\Enum\AlbumType;
 use Symfony\Component\DependencyInjection\Attribute\AsAlias;
 use Symfony\Component\DependencyInjection\Attribute\Target;
 use Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface;
+use Symfony\Contracts\HttpClient\Exception\ExceptionInterface as HttpClientExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
  * API MusicBrainz (https://musicbrainz.org/doc/MusicBrainz_API).
  *
- * Le rate limit (1 requête/s), le User-Agent et les retries sur 503 sont portés par
- * le client scopé "musicbrainz.client" (config/packages/framework.yaml), pas ici.
+ * Le rate limit (1 requête/s) et le User-Agent sont portés par le client scopé
+ * "musicbrainz.client" (config/packages/catalog.yaml). Les 503 sont rejoués par
+ * Messenger, pas par le client HTTP (voir la config).
  */
 #[AsAlias(CatalogProviderInterface::class)]
 final class MusicBrainzProvider implements CatalogProviderInterface
@@ -112,8 +114,10 @@ final class MusicBrainzProvider implements CatalogProviderInterface
     {
         try {
             $data = $this->coverArtArchive->request('GET', 'release-group/'.$albumExternalId)->toArray();
-        } catch (ClientExceptionInterface) {
-            // 404 : aucune pochette pour cet album.
+        } catch (HttpClientExceptionInterface) {
+            // 404 : pas de pochette. 5xx ou réseau : les miroirs archive.org flanchent
+            // parfois. Dans les deux cas la pochette est un bonus, elle ne doit pas faire
+            // échouer l'import des titres ; l'importeur garde alors l'ancienne.
             return null;
         }
 

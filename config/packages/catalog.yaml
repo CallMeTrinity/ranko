@@ -18,11 +18,11 @@ framework:
                     User-Agent: '%env(MUSICBRAINZ_USER_AGENT)%'
                     Accept: 'application/json'
                 rate_limiter: musicbrainz
-                # 503 "server busy" quand on dépasse la limite : on réessaie avec backoff.
-                retry_failed:
-                    max_retries: 3
-                    delay: 1000
-                    multiplier: 2
+                # Pas de retry_failed ici : Symfony place le retry SOUS le throttling, donc
+                # les retries partiraient sans rate limit, et MusicBrainz renvoie un
+                # Retry-After qui écrase le délai (retries "after 0ms" constatés). Un 503
+                # fait échouer le message, que Messenger rejoue avec backoff : le rejeu
+                # repasse par ce client, donc par le rate limiter.
             cover_art_archive.client:
                 base_uri: 'https://coverartarchive.org/'
                 headers:
