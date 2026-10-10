@@ -68,6 +68,10 @@ jobs:
             - name: Install dependencies
               run: composer install --no-interaction --no-progress --prefer-dist
 
+            # AssetMapper doit résoudre le CSS compilé par Tailwind pour rendre les pages.
+            - name: Build Tailwind
+              run: bin/console tailwind:build
+
             - name: Lint
               run: |
                   bin/console lint:container
@@ -122,6 +126,7 @@ jobs:
               run: |
                   bin/console assets:install public --no-interaction
                   bin/console importmap:install --no-interaction
+                  bin/console tailwind:build --minify
                   bin/console asset-map:compile --no-interaction
               env:
                   APP_ENV: prod

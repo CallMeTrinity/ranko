@@ -41,4 +41,35 @@ APP_DEBUG=0
 APP_SECRET=<openssl rand -hex 32>
 DATABASE_URL="mysql://<user>:<password>@<host>:3306/cf8j9_ranko?serverVersion=10.11.19-MariaDB&charset=utf8mb4"
 MAILER_DSN=null://null
+# Contact exigé par MusicBrainz (URL ou email)
+MUSICBRAINZ_USER_AGENT="Ranko/0.1 ( https://github.com/CallMeTrinity/ranko )"
 ```
+
+## Worker Messenger (imports MusicBrainz)
+
+Les imports de discographies passent par une file Messenger (transport Doctrine,
+table `messenger_messages`). Sur un mutualisé, pas de processus permanent : un cron
+relance le worker chaque minute, et `--time-limit` le fait s'arrêter avant le suivant.
+
+```cron
+* * * * * cd APP_DIR && REMOTE_PHP bin/console messenger:consume async --time-limit=55 --memory-limit=128M --quiet
+```
+
+Remplacer `APP_DIR` et `REMOTE_PHP` par les mêmes valeurs que dans GitHub. Le rate
+limit MusicBrainz (1 requête/s) est partagé entre le worker et le back-office via le
+cache et un verrou fichier (`LOCK_DSN=flock`, valeur par défaut) : rien à configurer.
+
+Les messages en échec après 3 tentatives atterrissent dans le transport `failed` :
+
+```bash
+bin/console messenger:failed:show
+bin/console messenger:failed:retry
+```
+
+## Premier administrateur
+
+```bash
+bin/console app:user:create --admin
+```
+
+La commande demande l'email, le mot de passe (saisie masquée) et le pseudo.
