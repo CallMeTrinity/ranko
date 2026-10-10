@@ -48,23 +48,51 @@ MUSICBRAINZ_USER_AGENT="Ranko/0.1 ( https://github.com/CallMeTrinity/ranko )"
 ## Worker Messenger (imports MusicBrainz)
 
 Les imports de discographies passent par une file Messenger (transport Doctrine,
-table `messenger_messages`). Sur un mutualisé, pas de processus permanent : un cron
-relance le worker chaque minute, et `--time-limit` le fait s'arrêter avant le suivant.
+table `messenger_messages`). Il faut un worker pour la vider, sinon les artistes
+restent en `pending`.
 
-```cron
-* * * * * cd APP_DIR && REMOTE_PHP bin/console messenger:consume async --time-limit=55 --memory-limit=128M --quiet
-```
+Le mutualisé Infomaniak n'a ni processus permanent ni cron shell : son planificateur
+de tâches appelle une URL. Cette URL fait tourner le worker dans la requête, jusqu'à
+`CRON_TIME_LIMIT` secondes ou jusqu'à ce que la file soit vide. L'appel suivant
+reprend là où le précédent s'est arrêté.
 
-Remplacer `APP_DIR` et `REMOTE_PHP` par les mêmes valeurs que dans GitHub. Le rate
-limit MusicBrainz (1 requête/s) est partagé entre le worker et le back-office via le
-cache et un verrou fichier (`LOCK_DSN=flock`, valeur par défaut) : rien à configurer.
+1. Dans `.env.local`, ajouter un secret (sans lui, la route répond 403) :
 
-Les messages en échec après 3 tentatives atterrissent dans le transport `failed` :
+   ```dotenv
+   APP_CRON_SECRET=<openssl rand -hex 32>
+   CRON_TIME_LIMIT=20
+   ```
+
+2. Dans le Manager Infomaniak, créer une tâche planifiée qui appelle, chaque minute
+   (ou à l'intervalle le plus court proposé) :
+
+   ```
+   https://<domaine>/cron/messenger?token=<APP_CRON_SECRET>
+   ```
+
+Réponse : `{"status":"ok","handled":6,"retried":0,"failed":0,"remaining":0}`.
+`remaining` est le nombre de messages encore en file. `busy` signifie qu'un appel
+précédent tourne encore : un verrou empêche deux workers en parallèle.
+
+**Durée d'un appel** : le budget n'est vérifié qu'entre deux messages, donc un appel
+dure jusqu'à `CRON_TIME_LIMIT` + la durée d'un message (environ 10 s au pire). Garder
+ce total sous le `max_execution_time` de PHP et sous le délai d'attente du
+planificateur. Avec une limite à 30 s, mettre `CRON_TIME_LIMIT=15`.
+
+Garder l'URL privée : elle contient le secret. Changer `APP_CRON_SECRET` si elle fuite.
+
+Le rate limit MusicBrainz (1 requête/s) est partagé entre le worker et le back-office
+via le cache et un verrou fichier (`LOCK_DSN=flock`, valeur par défaut). Un 503 de
+MusicBrainz fait échouer le message, que Messenger rejoue après 5 s, 15 s puis 45 s.
+Après 3 échecs, il part dans le transport `failed` :
 
 ```bash
 bin/console messenger:failed:show
 bin/console messenger:failed:retry
 ```
+
+Sur un VPS, on peut se passer de l'URL et lancer un vrai worker permanent
+(`bin/console messenger:consume async`) sous systemd ou Supervisor.
 
 ## Premier administrateur
 
