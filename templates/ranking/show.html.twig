@@ -16,6 +16,14 @@
 
         {% if can_edit %}
             <div class="flex flex-wrap gap-2">
+                {% if active_duel %}
+                    <a href="{{ path('app_duel_show', {id: ranking.id}) }}" class="border px-3 py-1">Reprendre le duel</a>
+                {% elseif ranking.entries|length >= 2 %}
+                    <form method="post" action="{{ path('app_duel_start_sort', {id: ranking.id}) }}">
+                        <input type="hidden" name="_token" value="{{ token }}">
+                        <button type="submit" class="border px-3 py-1">Classer par duel</button>
+                    </form>
+                {% endif %}
                 <form method="post" action="{{ path('app_ranking_visibility', {id: ranking.id}) }}">
                     <input type="hidden" name="_token" value="{{ token }}">
                     <button type="submit" class="border px-3 py-1">{{ ranking.public ? 'Rendre privé' : 'Rendre public' }}</button>
@@ -35,6 +43,10 @@
                 {% for item in missing_items %}<li>{{ item.name }}</li>{% endfor %}
             </ul>
             <div class="flex flex-wrap gap-2">
+                <form method="post" action="{{ path('app_duel_insert_missing', {id: ranking.id}) }}">
+                    <input type="hidden" name="_token" value="{{ token }}">
+                    <button type="submit" class="border px-3 py-1">Placer par duel</button>
+                </form>
                 <form method="post" action="{{ path('app_ranking_append_missing', {id: ranking.id}) }}">
                     <input type="hidden" name="_token" value="{{ token }}">
                     <button type="submit" class="border px-3 py-1">Ajouter à la fin</button>
@@ -60,6 +72,11 @@
                     <div class="flex shrink-0 gap-1">
                         <button type="button" class="border px-2" data-action="sortable#moveUp" aria-label="Monter {{ item.name }}">↑</button>
                         <button type="button" class="border px-2" data-action="sortable#moveDown" aria-label="Descendre {{ item.name }}">↓</button>
+                        <form method="post" action="{{ path('app_duel_place_item', {id: ranking.id}) }}">
+                            <input type="hidden" name="itemId" value="{{ item.id }}">
+                            <input type="hidden" name="_token" value="{{ token }}">
+                            <button type="submit" class="border px-2" title="Replacer par duel" aria-label="Replacer {{ item.name }} par duel">⇅</button>
+                        </form>
                         <form method="post" action="{{ path('app_ranking_remove_item', {id: ranking.id}) }}">
                             <input type="hidden" name="itemId" value="{{ item.id }}">
                             <input type="hidden" name="_token" value="{{ token }}">

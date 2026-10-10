@@ -1,0 +1,35 @@
+{% extends 'base.html.twig' %}
+
+{% set token = csrf_token('ranking' ~ ranking.id) %}
+
+{% block title %}Duel · {{ ranking.title }} · Ranko{% endblock %}
+
+{% block body %}
+    <nav class="mb-4 text-sm"><a href="{{ path('app_ranking_show', {id: ranking.id}) }}">{{ ranking.title }}</a> › Duel</nav>
+
+    <header class="mb-6 flex flex-col gap-2">
+        <h1 class="text-2xl">{{ duel.type.value == 'sort' ? 'Lequel tu préfères ?' : 'Où le placer ?' }}</h1>
+        <p class="text-sm">Question {{ question }} · au plus {{ max_remaining }} restante{{ max_remaining > 1 ? 's' }}</p>
+        <progress value="{{ progress }}" max="1" class="w-full">{{ (progress * 100)|round }} %</progress>
+    </header>
+
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_auto_1fr] sm:items-center" data-controller="duel">
+        {{ include('duel/_choice.html.twig', {choice: left, side: 'left'}) }}
+        <span class="text-center" aria-hidden="true">ou</span>
+        {{ include('duel/_choice.html.twig', {choice: right, side: 'right'}) }}
+    </div>
+    <p class="mt-3 text-center text-sm">Raccourcis : ← et →</p>
+
+    <div class="mt-8 flex flex-wrap justify-center gap-2">
+        {% if duel.canUndo %}
+            <form method="post" action="{{ path('app_duel_undo', {id: ranking.id}) }}">
+                <input type="hidden" name="_token" value="{{ token }}">
+                <button type="submit" class="border px-3 py-1">Annuler la dernière réponse</button>
+            </form>
+        {% endif %}
+        <form method="post" action="{{ path('app_duel_abandon', {id: ranking.id}) }}" data-turbo-confirm="Abandonner ce duel ? Le classement ne sera pas modifié.">
+            <input type="hidden" name="_token" value="{{ token }}">
+            <button type="submit" class="border px-3 py-1">Abandonner</button>
+        </form>
+    </div>
+{% endblock %}

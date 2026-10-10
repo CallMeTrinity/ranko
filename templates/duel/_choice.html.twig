@@ -1,0 +1,20 @@
+{# Un des deux choix du duel. Variables : ranking, left, right, choice, side, token #}
+{% set kind = choice.kind.value %}
+{% set cover = kind == 'album' ? choice.coverUrl : (kind == 'track' ? choice.album.coverUrl : null) %}
+<form method="post" action="{{ path('app_duel_answer', {id: ranking.id}) }}" class="flex">
+    <input type="hidden" name="leftId" value="{{ left.id }}">
+    <input type="hidden" name="rightId" value="{{ right.id }}">
+    <input type="hidden" name="winnerId" value="{{ choice.id }}">
+    <input type="hidden" name="_token" value="{{ token }}">
+    <button type="submit" class="flex w-full flex-col items-center gap-3 border p-4" data-duel-target="{{ side }}">
+        {% if cover %}
+            <img src="{{ cover }}" alt="" class="aspect-square w-full max-w-60 object-cover">
+        {% endif %}
+        <span class="text-xl">{{ choice.name }}</span>
+        <span class="text-sm">
+            {%- if kind == 'album' %}{{ choice.artist.name }}{% if choice.releaseYear %} · {{ choice.releaseYear }}{% endif %}
+            {%- elseif kind == 'track' %}{{ choice.album.name }} · {{ choice.album.artist.name }}
+            {%- else %}{{ choice.disambiguation }}{% endif -%}
+        </span>
+    </button>
+</form>

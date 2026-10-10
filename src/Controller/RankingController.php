@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Controller\Payload\CreateRankingPayload;
 use App\Controller\Payload\ItemPayload;
 use App\Controller\Payload\ReorderPayload;
+use App\Duel\DuelManager;
 use App\Entity\CatalogItem;
 use App\Entity\Ranking;
 use App\Entity\User;
@@ -77,11 +78,14 @@ final class RankingController extends AbstractController
 
     #[Route('/{id<\d+>}', name: 'app_ranking_show', methods: ['GET'])]
     #[IsGranted(RankingVoter::VIEW, 'ranking')]
-    public function show(#[MapEntity(expr: 'repository.findWithItems(id)')] Ranking $ranking): Response
+    public function show(#[MapEntity(expr: 'repository.findWithItems(id)')] Ranking $ranking, DuelManager $duels): Response
     {
+        $canEdit = $this->isGranted(RankingVoter::EDIT, $ranking);
+
         return $this->render('ranking/show.html.twig', [
             'ranking' => $ranking,
-            'missing_items' => $this->isGranted(RankingVoter::EDIT, $ranking) ? $this->manager->findMissingItems($ranking) : [],
+            'missing_items' => $canEdit ? $this->manager->findMissingItems($ranking) : [],
+            'active_duel' => $canEdit ? $duels->findActive($ranking) : null,
         ]);
     }
 
