@@ -4,7 +4,7 @@ Tout passe par GitHub Actions (`.github/workflows/ci.yml`), sur le même modèle
 
 ## Déroulé
 
-1. **test** : lints, PHPStan, PHPUnit sur MariaDB 11.4. Tourne sur chaque PR et chaque push sur `main`.
+1. **test** : lints, PHPStan, PHPUnit sur MariaDB 10.11. Tourne sur chaque PR et chaque push sur `main`.
 2. **build** : `composer install --no-dev`, compilation des assets, archive `release.tar.gz` publiée en artifact.
 3. **deploy** (push sur `main` uniquement, après `test` et `build`) :
    - attend l'approbation manuelle sur l'environnement `production` ;
@@ -31,7 +31,7 @@ Settings > Secrets and variables > Actions :
 
 ## Pré-requis serveur
 
-- PHP ≥ 8.4.1 avec `ctype`, `iconv`, `intl`, `pdo_mysql`, et MariaDB 11.4. Composer n'est pas nécessaire, `vendor/` arrive avec la release.
+- PHP ≥ 8.4.1 avec `ctype`, `iconv`, `intl`, `pdo_mysql`, et MariaDB 10.11. Composer n'est pas nécessaire, `vendor/` arrive avec la release.
 - Document root sur `APP_DIR/public`.
 - Un fichier `APP_DIR/.env.local`, jamais écrasé par le rsync :
 
@@ -39,6 +39,6 @@ Settings > Secrets and variables > Actions :
 APP_ENV=prod
 APP_DEBUG=0
 APP_SECRET=<openssl rand -hex 32>
-DATABASE_URL="mysql://<user>:<password>@<host>:3306/<db>?serverVersion=11.4.4-MariaDB&charset=utf8mb4"
+DATABASE_URL="mysql://<user>:<password>@<host>:3306/cf8j9_ranko?serverVersion=10.11.19-MariaDB&charset=utf8mb4"
 MAILER_DSN=null://null
 ```

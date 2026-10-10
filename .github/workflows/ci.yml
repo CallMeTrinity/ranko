@@ -28,7 +28,7 @@ jobs:
 
         services:
             database:
-                image: mariadb:11.4
+                image: mariadb:10.11
                 env:
                     MARIADB_DATABASE: db
                     MARIADB_USER: db
