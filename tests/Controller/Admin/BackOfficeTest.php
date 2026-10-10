@@ -10,6 +10,7 @@ use App\Tests\Fixtures\CatalogHttpMock;
 use App\Tests\Support\CreatesEntities;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\Lock\LockFactory;
 use Symfony\Component\Messenger\Transport\InMemory\InMemoryTransport;
 
 final class BackOfficeTest extends WebTestCase
@@ -73,6 +74,16 @@ final class BackOfficeTest extends WebTestCase
         self::assertSelectorTextContains('table', 'Déjà importé');
     }
 
+    public function testSearchShowsAMessageWhenMusicBrainzIsBusy(): void
+    {
+        $this->client->loginUser(self::createUser('admin', admin: true));
+
+        $this->client->request('GET', '/admin/import?q='.CatalogHttpMock::BUSY_QUERY);
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextContains('body', 'MusicBrainz ne répond pas');
+    }
+
     public function testImportRejectsInvalidCsrfToken(): void
     {
         $this->client->loginUser(self::createUser('admin', admin: true));
@@ -113,6 +124,38 @@ final class BackOfficeTest extends WebTestCase
         $message = $this->sentMessages()[0] ?? null;
         self::assertInstanceOf(ImportAlbumTracks::class, $message);
         self::assertSame($album->getId(), $message->albumId);
+    }
+
+    /**
+     * Le traitement de la file lui-même est couvert par CronControllerTest (même
+     * QueueRunner). Ici : le bouton répond, rend compte, et l'admin reste connecté. Le
+     * reset des services par le worker le déconnectait avant l'option --no-reset.
+     */
+    public function testProcessQueueButtonKeepsTheAdminLoggedIn(): void
+    {
+        $this->client->loginUser(self::createUser('admin', admin: true));
+
+        $crawler = $this->client->request('GET', '/admin/artist');
+        $this->client->submit($crawler->filter('form[action*="/process-queue"]')->form());
+
+        self::assertResponseRedirects('/admin/artist');
+        $this->client->followRedirect();
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextContains('body', 'message(s) traité(s)');
+    }
+
+    public function testProcessQueueButtonDoesNotStartASecondWorker(): void
+    {
+        $this->client->loginUser(self::createUser('admin', admin: true));
+        $lock = self::getContainer()->get(LockFactory::class)->createLock('messenger-queue-runner');
+        self::assertTrue($lock->acquire(), 'Simule le planificateur en train de tourner');
+
+        $crawler = $this->client->request('GET', '/admin/artist');
+        $this->client->submit($crawler->filter('form[action*="/process-queue"]')->form());
+        $this->client->followRedirect();
+
+        self::assertSelectorTextContains('body', 'Un traitement est déjà en cours');
+        $lock->release();
     }
 
     /**

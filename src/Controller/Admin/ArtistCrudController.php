@@ -5,6 +5,7 @@ namespace App\Controller\Admin;
 use App\Catalog\CatalogImporter;
 use App\Entity\Artist;
 use App\Enum\ImportStatus;
+use App\Messenger\QueueRunner;
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
@@ -30,6 +31,7 @@ final class ArtistCrudController extends AbstractCrudController
 {
     public function __construct(
         private readonly CsrfTokenManagerInterface $csrfTokenManager,
+        private readonly QueueRunner $queueRunner,
     ) {
     }
 
@@ -84,10 +86,18 @@ final class ArtistCrudController extends AbstractCrudController
             ->createAsGlobalAction()
             ->asPrimaryAction();
 
+        // Le planificateur ne passe que toutes les 15 min : ce bouton évite d'attendre.
+        $pending = $this->queueRunner->pendingCount();
+        $processQueue = Action::new('processQueue', null === $pending ? 'Traiter la file' : sprintf('Traiter la file (%d)', $pending), 'fa fa-play')
+            ->linkToRoute('admin_artist_process_queue', ['token' => $this->csrfTokenManager->getToken('process-queue')->getValue()])
+            ->renderAsForm()
+            ->createAsGlobalAction();
+
         // Les artistes viennent toujours d'un import : pas de création à la main.
         return $actions
             ->disable(Action::NEW)
             ->add(Crud::PAGE_INDEX, $import)
+            ->add(Crud::PAGE_INDEX, $processQueue)
             ->add(Crud::PAGE_INDEX, $reimport)
             ->add(Crud::PAGE_DETAIL, $reimport);
     }
@@ -99,6 +109,37 @@ final class ArtistCrudController extends AbstractCrudController
         $importer->requestDiscographyImport($artist);
 
         $this->addFlash('success', sprintf('Réimport de "%s" planifié.', $artist->getName()));
+
+        return $this->redirectToRoute('admin_artist_index');
+    }
+
+    /**
+     * Lance le worker dans la requête, pour au plus CRON_TIME_LIMIT secondes. Si la file
+     * n'est pas vide à la fin, on peut recliquer.
+     */
+    #[AdminRoute('/process-queue', name: 'process_queue', options: ['methods' => ['POST']])]
+    #[IsCsrfTokenValid('process-queue', tokenKey: 'token', tokenSource: IsCsrfTokenValid::SOURCE_QUERY)]
+    public function processQueue(): Response
+    {
+        $result = $this->queueRunner->run();
+
+        if (null === $result) {
+            $this->addFlash('warning', 'Un traitement est déjà en cours (planificateur ou autre onglet). Réessaie dans un moment.');
+        } else {
+            $message = sprintf('%d message(s) traité(s)', $result['handled']);
+            if ($result['retried'] > 0) {
+                // Rejoués après un délai (5 s, 15 s, 45 s) : pas encore comptés dans "remaining".
+                $message .= sprintf(', %d en erreur, rejoué(s) automatiquement un peu plus tard', $result['retried']);
+            }
+            if ($result['failed'] > 0) {
+                $message .= sprintf(', %d en échec définitif', $result['failed']);
+            }
+            if (null !== $result['remaining']) {
+                $message .= 0 === $result['remaining'] ? '. Rien d\'autre en attente pour l\'instant.' : sprintf('. Encore %d en attente : reclique pour continuer.', $result['remaining']);
+            }
+
+            $this->addFlash($result['failed'] > 0 ? 'warning' : 'success', $message);
+        }
 
         return $this->redirectToRoute('admin_artist_index');
     }

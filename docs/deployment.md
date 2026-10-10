@@ -81,6 +81,15 @@ planificateur. Avec une limite à 30 s, mettre `CRON_TIME_LIMIT=15`.
 
 Garder l'URL privée : elle contient le secret. Changer `APP_CRON_SECRET` si elle fuite.
 
+**Sans attendre le planificateur** (il ne passe que toutes les 15 min) :
+
+- back-office, liste des artistes : bouton « Traiter la file (n) ». Il lance le même
+  worker, avec le même budget ; recliquer tant qu'il reste des messages ;
+- en SSH, sans limite de temps : `bin/console messenger:consume async --time-limit=600 -vv`,
+  et `bin/console messenger:stats` pour voir ce qui reste.
+
+Le bouton et l'URL partagent un verrou : si l'un tourne, l'autre répond « déjà en cours ».
+
 Le rate limit MusicBrainz (1 requête/s) est partagé entre le worker et le back-office
 via le cache et un verrou fichier (`LOCK_DSN=flock`, valeur par défaut). Un 503 de
 MusicBrainz fait échouer le message, que Messenger rejoue après 5 s, 15 s puis 45 s.
