@@ -1,0 +1,19 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier le profil · Ranko{% endblock %}
+
+{% block body %}
+    <div class="mx-auto flex max-w-sm flex-col gap-6">
+        <nav class="text-sm text-ink-muted">
+            <a href="{{ path('app_profile', {username: app.user.username}) }}">‹ Mon profil</a>
+        </nav>
+
+        <h1 class="text-[30px] font-bold tracking-[-0.6px]">Modifier le profil</h1>
+
+        {% set field = {row_attr: {class: 'flex flex-col gap-1.5 font-semibold'}, attr: {class: 'py-3 font-normal'}} %}
+        {{ form_start(form, {attr: {class: 'flex flex-col gap-4'}}) }}
+            {{ form_row(form.bio, field) }}
+            <button type="submit" class="btn btn-lg btn-primary">Enregistrer</button>
+        {{ form_end(form) }}
+    </div>
+{% endblock %}

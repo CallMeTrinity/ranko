@@ -1,0 +1,28 @@
+{# Variables : profile, is_me, kind (filtre courant ou null), kinds (types présents), rankings, tops
+   Le filtre ne recharge que ce cadre ; les liens vers les classements sortent du cadre (target _top). #}
+<turbo-frame id="profile-rankings" target="_top">
+    <section class="flex flex-col gap-3.5" aria-labelledby="public-title">
+        <h2 id="public-title" class="text-lg font-bold">Classements publics</h2>
+
+        {% if kinds|length > 1 %}
+            <nav class="flex flex-wrap gap-2" aria-label="Filtrer par type">
+                {% set filters = [{label: 'Tout', href: path('app_profile', {username: profile.username}), current: kind is null}] %}
+                {% for k in kinds %}
+                    {% set filters = filters|merge([{label: k.label, href: path('app_profile', {username: profile.username, kind: k.value}), current: kind == k}]) %}
+                {% endfor %}
+                {% for filter in filters %}
+                    <a href="{{ filter.href }}" data-turbo-frame="profile-rankings" data-turbo-action="advance"
+                       class="btn {{ filter.current ? 'btn-primary' }}" {% if filter.current %}aria-current="page"{% endif %}>{{ filter.label }}</a>
+                {% endfor %}
+            </nav>
+        {% endif %}
+
+        {% if rankings is not empty %}
+            {{ include('ranking/_list.html.twig', {rankings: rankings, tops: tops}, with_context = false) }}
+        {% elseif kind is not null %}
+            <p>Aucun classement public de ce type.</p>
+        {% else %}
+            <p>Aucun classement public{% if is_me %}. Tes classements privés n'apparaissent pas ici{% endif %}.</p>
+        {% endif %}
+    </section>
+</turbo-frame>

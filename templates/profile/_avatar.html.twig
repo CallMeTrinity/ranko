@@ -1,0 +1,4 @@
+{# Avatar généré : initiale du pseudo sur un aplat hachuré, même teinte stable que les pochettes absentes.
+   Variables : user, class (taille et corps de l'initiale) #}
+<span class="{{ class }} relative grid shrink-0 place-items-center overflow-hidden rounded-cover border-2 border-ink cover-placeholder font-mono font-medium uppercase"
+      style="--cover-hue: {{ (user.id * 47) % 360 }}" aria-hidden="true">{{ user.username|first }}</span>

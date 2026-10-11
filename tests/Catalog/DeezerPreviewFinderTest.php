@@ -16,8 +16,18 @@ final class DeezerPreviewFinderTest extends TestCase
 {
     private const string PREVIEW = 'https://cdnt-preview.dzcdn.net/api/1/1/fixture/138539971.mp3?hdnea=exp=0';
 
-    /** @var list<string> */
-    private array $requestedUrls = [];
+    /**
+     * Objet et non tableau : rempli par le client HTTP simulé, dans le dos de PHPStan,
+     * qui croirait sinon le compte figé entre deux assertions.
+     *
+     * @var \ArrayObject<int, string>
+     */
+    private \ArrayObject $requestedUrls;
+
+    protected function setUp(): void
+    {
+        $this->requestedUrls = new \ArrayObject();
+    }
 
     public function testFindsTheTrackOfTheSameArtistAndCachesIt(): void
     {
@@ -26,8 +36,9 @@ final class DeezerPreviewFinderTest extends TestCase
 
         self::assertSame(self::PREVIEW, $finder->findPreviewUrl($track));
         self::assertCount(2, $this->requestedUrls, 'Une recherche puis l\'extrait frais');
-        self::assertStringContainsString('q=Radiohead%20Airbag%20OK%20Computer', $this->requestedUrls[0]);
-        self::assertStringEndsWith('/track/138539971', $this->requestedUrls[1]);
+        [$search, $preview] = $this->requestedUrls->getArrayCopy();
+        self::assertStringContainsString('q=Radiohead%20Airbag%20OK%20Computer', $search);
+        self::assertStringEndsWith('/track/138539971', $preview);
 
         self::assertSame(self::PREVIEW, $finder->findPreviewUrl($track));
         self::assertCount(2, $this->requestedUrls, 'La correspondance et l\'extrait sont en cache');

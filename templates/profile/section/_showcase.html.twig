@@ -1,0 +1,15 @@
+{# Le n°1 de chaque classement global. Variables : favorites (list de {kind, item, ranking}) #}
+<section class="flex flex-col gap-3.5" aria-labelledby="showcase-title">
+    <h2 id="showcase-title" class="text-lg font-bold">Ses n°1</h2>
+    <ul class="grid gap-3.5 sm:grid-cols-3">
+        {% for favorite in favorites %}
+            <li class="card relative flex items-center gap-3.5 overflow-hidden p-3.5 sm:flex-col sm:items-stretch">
+                {{ include('catalog/_cover.html.twig', {item: favorite.item, seed: favorite.ranking.id, class: 'size-20 rounded-cover sm:size-auto sm:aspect-square sm:w-full', sizes: '(min-width: 640px) 300px, 80px'}) }}
+                <div class="flex min-w-0 flex-col gap-1">
+                    <span class="font-mono text-xs font-medium uppercase tracking-[0.5px] text-ink-muted">N°1 des {{ favorite.kind.label|lower }}</span>
+                    <a href="{{ path('app_ranking_show', {id: favorite.ranking.id}) }}" class="truncate font-bold after:absolute after:inset-0">{{ favorite.item.name }}</a>
+                </div>
+            </li>
+        {% endfor %}
+    </ul>
+</section>

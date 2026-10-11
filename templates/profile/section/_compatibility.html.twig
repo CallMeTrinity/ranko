@@ -1,0 +1,25 @@
+{# Variables : compatibility (App\Ranking\Comparison\Compatibility), profile #}
+{% set percent = (compatibility.agreement * 100)|round %}
+<section class="card flex flex-col gap-4 p-[18px]" aria-labelledby="compatibility-title">
+    <h2 id="compatibility-title" class="flex flex-wrap items-center gap-3">
+        <span class="sr-only">{{ percent }} % d'accord avec {{ profile.username }}</span>
+        <span class="flex items-center gap-1 font-mono font-medium" aria-hidden="true">
+            {% for digit in percent|split('') %}
+                <span class="counter-digit h-[52px] w-10 rounded-cover text-[34px]">{{ digit }}</span>
+            {% endfor %}
+            <span class="pl-1 text-[28px]">%</span>
+        </span>
+        <span class="text-lg font-bold" aria-hidden="true">d'accord avec {{ profile.username }}</span>
+    </h2>
+    <p class="text-sm text-ink-muted">
+        Sur {{ compatibility.pairs|length }} classement{{ compatibility.pairs|length > 1 ? 's' }} en commun.
+    </p>
+    <ul class="flex flex-col gap-2">
+        {% for pair in compatibility.pairs %}
+            <li class="relative flex items-center gap-3 rounded-control bg-sunken px-3.5 py-2.5">
+                <a href="{{ path('app_ranking_compare', {id: pair.mine.id, otherId: pair.theirs.id}) }}" class="flex-1 truncate font-mono text-sm font-medium uppercase after:absolute after:inset-0">{{ pair.theirs.title }}</a>
+                <span class="font-mono text-sm">{{ (pair.result.agreement * 100)|round }} %</span>
+            </li>
+        {% endfor %}
+    </ul>
+</section>

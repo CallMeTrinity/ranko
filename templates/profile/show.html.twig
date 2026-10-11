@@ -2,27 +2,43 @@
 
 {% block title %}{{ profile.username }} · Ranko{% endblock %}
 
+{% block meta %}
+    <meta property="og:type" content="profile">
+    <meta property="og:title" content="{{ profile.username }} · Ranko">
+    {% if profile.bio %}<meta property="og:description" content="{{ profile.bio }}">{% endif %}
+    <meta property="og:url" content="{{ url('app_profile', {username: profile.username}) }}">
+{% endblock %}
+
 {% block body %}
-    {% set is_me = app.user and app.user.id == profile.id %}
     <div class="flex flex-col gap-6">
-        <header class="flex flex-col gap-3">
-            <h1 class="font-mono text-3xl font-medium">{{ profile.username }}</h1>
-            <p class="text-sm text-ink-muted">Membre depuis {{ profile.createdAt|date('m/Y') }}</p>
-            <div data-controller="clipboard" data-clipboard-text-value="{{ url('app_profile', {username: profile.username}) }}" class="flex flex-wrap items-center gap-2">
-                <button type="button" class="btn" data-action="clipboard#copy" data-clipboard-target="button">Copier le lien du profil</button>
-                {% if is_me %}
-                    <a href="{{ path('app_logout') }}" class="btn">Déconnexion</a>
+        <header class="card overflow-hidden" data-controller="clipboard" data-clipboard-text-value="{{ url('app_profile', {username: profile.username}) }}">
+            <div class="stripes-stack h-[30px]" aria-hidden="true"></div>
+            <div class="flex flex-col gap-4 p-4">
+                <div class="flex items-center gap-4">
+                    {{ include('profile/_avatar.html.twig', {user: profile, class: 'size-20 text-[34px]'}) }}
+                    <div class="flex min-w-0 flex-col gap-1">
+                        <h1 class="truncate font-mono text-2xl font-medium md:text-3xl">{{ profile.username }}</h1>
+                        <p class="text-[13px] text-ink-muted">Membre depuis {{ profile.createdAt|date('m/Y') }}</p>
+                    </div>
+                </div>
+                {% if profile.bio %}
+                    <p class="max-w-prose text-sm leading-relaxed text-pretty">{{ profile.bio|nl2br }}</p>
+                {% elseif is_me %}
+                    <p class="text-sm text-ink-muted">Pas encore de bio. <a href="{{ path('app_profile_edit') }}" class="underline">Présente-toi</a> en quelques mots.</p>
                 {% endif %}
+                <div class="flex flex-wrap items-center gap-2">
+                    <button type="button" class="btn" data-action="clipboard#copy" data-clipboard-target="button">Copier le lien du profil</button>
+                    {% if is_me %}
+                        <a href="{{ path('app_profile_edit') }}" class="btn">Modifier le profil</a>
+                        <a href="{{ path('app_logout') }}" class="btn">Déconnexion</a>
+                    {% endif %}
+                </div>
             </div>
         </header>
 
-        <section class="flex flex-col gap-3.5" aria-labelledby="public-title">
-            <h2 id="public-title" class="text-lg font-bold">Classements publics</h2>
-            {% if rankings is empty %}
-                <p>Aucun classement public{% if is_me %}. Tes classements privés n'apparaissent pas ici{% endif %}.</p>
-            {% else %}
-                {{ include('ranking/_list.html.twig') }}
-            {% endif %}
-        </section>
+        {# Une entrée par section (App\Profile\Section), déjà triée et filtrée. #}
+        {% for block in blocks %}
+            {{ include(block.template, block.context, with_context = false) }}
+        {% endfor %}
     </div>
 {% endblock %}

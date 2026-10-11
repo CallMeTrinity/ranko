@@ -138,6 +138,26 @@ class RankingRepository extends ServiceEntityRepository
         return $tops;
     }
 
+    /**
+     * Nombre d'éléments distincts dans ces classements : un titre présent dans deux
+     * classements ne compte qu'une fois.
+     *
+     * @param list<Ranking> $rankings
+     */
+    public function countDistinctItems(array $rankings): int
+    {
+        if ([] === $rankings) {
+            return 0;
+        }
+
+        return (int) $this->getEntityManager()->createQueryBuilder()
+            ->select('COUNT(DISTINCT IDENTITY(entry.item))')
+            ->from(RankingEntry::class, 'entry')
+            ->andWhere('entry.ranking IN (:rankings)')
+            ->setParameter('rankings', $rankings)
+            ->getQuery()->getSingleScalarResult();
+    }
+
     private function publicQueryBuilder(): QueryBuilder
     {
         // Fetch join du périmètre : le titre l'affiche, et une association vers la racine
@@ -168,5 +188,28 @@ class RankingRepository extends ServiceEntityRepository
             ->orderBy('entry.position')
             ->getQuery()
             ->getOneOrNullResult();
+    }
+
+    /**
+     * Comme findWithItems(), pour plusieurs classements en une requête.
+     *
+     * @param list<int> $ids
+     *
+     * @return list<Ranking>
+     */
+    public function findWithItemsByIds(array $ids): array
+    {
+        if ([] === $ids) {
+            return [];
+        }
+
+        return $this->createQueryBuilder('ranking')
+            ->addSelect('entry', 'item')
+            ->leftJoin('ranking.entries', 'entry')
+            ->leftJoin('entry.item', 'item')
+            ->andWhere('ranking.id IN (:ids)')
+            ->setParameter('ids', $ids)
+            ->orderBy('entry.position')
+            ->getQuery()->getResult();
     }
 }

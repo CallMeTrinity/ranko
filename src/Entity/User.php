@@ -44,6 +44,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private \DateTimeImmutable $createdAt;
 
+    #[ORM\Column(length: 280, nullable: true)]
+    #[Assert\Length(max: 280, maxMessage: 'Au plus {{ limit }} caractères.')]
+    private ?string $bio = null;
+
     public function __construct(string $email, string $username)
     {
         $this->email = $email;
@@ -118,6 +122,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function getCreatedAt(): \DateTimeImmutable
     {
         return $this->createdAt;
+    }
+
+    public function getBio(): ?string
+    {
+        return $this->bio;
+    }
+
+    public function setBio(?string $bio): static
+    {
+        $this->bio = $bio;
+
+        return $this;
     }
 
     /**

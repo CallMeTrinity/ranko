@@ -64,7 +64,9 @@ final class CatalogControllerTest extends WebTestCase
         $client = self::createClient();
         $album = self::createAlbum(self::createArtist(), 'OK Computer', ['Airbag'], hidden: true);
 
-        $client->request('GET', '/tracks/'.$album->getTracks()->first()->getId().'/preview');
+        $track = $album->getTracks()->first() ?: throw new \LogicException('Album sans titre.');
+
+        $client->request('GET', '/tracks/'.$track->getId().'/preview');
         self::assertResponseStatusCodeSame(404);
     }
 
