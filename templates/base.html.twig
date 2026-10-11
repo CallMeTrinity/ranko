@@ -5,7 +5,10 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>{% block title %}Ranko{% endblock %}</title>
         {% block meta %}{% endblock %}
-        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>🏆</text></svg>">
+        <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
+        <link rel="apple-touch-icon" href="{{ asset('pwa/apple-touch-icon.png') }}">
+        <link rel="manifest" href="{{ asset('manifest.webmanifest') }}">
+        <meta name="theme-color" content="#2b2118">
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap">
@@ -28,7 +31,10 @@
         <div class="stripes-stack h-[35px] shrink-0" aria-hidden="true"></div>
 
         <header class="mx-auto flex w-full max-w-5xl items-center gap-6 px-5 pt-4 md:pt-5">
-            <a href="{{ path('app_home') }}" class="text-[26px] font-bold tracking-[-0.5px]">Ranko</a>
+            <a href="{{ path('app_home') }}" class="flex items-center gap-2 text-[26px] font-bold tracking-[-0.5px]">
+                <img src="{{ asset('favicon.svg') }}" alt="" width="32" height="32" class="size-8">
+                Ranko
+            </a>
 
             {% block navigation %}
                 <nav aria-label="Navigation principale"
