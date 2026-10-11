@@ -67,7 +67,7 @@ final class MusicBrainzProviderTest extends KernelTestCase
 
     public function testCoverUrl(): void
     {
-        self::assertStringEndsWith('-500.jpg', (string) $this->provider->fetchCoverUrl(CatalogHttpMock::OK_COMPUTER));
+        self::assertStringEndsWith('-1200.jpg', (string) $this->provider->fetchCoverUrl(CatalogHttpMock::OK_COMPUTER));
         self::assertNull($this->provider->fetchCoverUrl(CatalogHttpMock::UNKNOWN));
         self::assertNull($this->provider->fetchCoverUrl(CatalogHttpMock::BROKEN_COVER), 'Une panne du serveur de pochettes ne fait pas échouer l\'import');
     }

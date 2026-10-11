@@ -15,8 +15,12 @@
         <meta property="og:description" content="{% for item in top %}{{ loop.index }}. {{ item.name }}{{ not loop.last ? ' · ' }}{% endfor %}">
         <meta property="og:url" content="{{ url('app_ranking_show', {id: ranking.id}) }}">
         {% if first and first.kind.value != 'artist' %}
-            {% set cover = first.kind.value == 'album' ? first.coverUrl : first.album.coverUrl %}
-            {% if cover %}<meta property="og:image" content="{{ cover }}">{% endif %}
+            {% set album = first.kind.value == 'album' ? first : first.album %}
+            {% if album.coverPath %}
+                <meta property="og:image" content="{{ album.coverPath|imagine_filter('square_1024') }}">
+            {% elseif album.coverUrl %}
+                <meta property="og:image" content="{{ album.coverUrl }}">
+            {% endif %}
         {% endif %}
     {% endif %}
 {% endblock %}
@@ -37,7 +41,7 @@
         <header class="card overflow-hidden">
             <div class="stripes-stack h-[30px]" aria-hidden="true"></div>
             <div class="flex items-center gap-3.5 p-4">
-                {{ include('catalog/_cover.html.twig', {item: items|first ?: null, seed: ranking.id, class: 'size-24 rounded-cover'}) }}
+                {{ include('catalog/_cover.html.twig', {item: items|first ?: null, seed: ranking.id, class: 'size-24 rounded-cover', sizes: '96px'}) }}
                 <div class="flex min-w-0 flex-col gap-1.5">
                     <h1 class="font-mono text-[19px] leading-tight font-medium uppercase md:text-2xl">{{ ranking.title }}</h1>
                     <p class="text-[13px] leading-snug text-ink-muted">

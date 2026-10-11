@@ -9,6 +9,7 @@ use App\Entity\Album;
 use App\Entity\Artist;
 use App\Entity\Track;
 use App\Enum\ImportStatus;
+use App\Media\ImageStore;
 use App\Message\ImportAlbumTracks;
 use App\Message\ImportArtistDiscography;
 use App\Repository\ExternalReferenceRepository;
@@ -29,6 +30,7 @@ final class CatalogImporter
         private readonly EntityManagerInterface $entityManager,
         private readonly MessageBusInterface $bus,
         private readonly ClockInterface $clock,
+        private readonly ImageStore $images,
     ) {
     }
 
@@ -109,8 +111,22 @@ final class CatalogImporter
         $album
             ->setCoverUrl($this->provider->fetchCoverUrl($albumExternalId) ?? $album->getCoverUrl())
             ->setTracksImportedAt($this->clock->now());
+        $this->storeCover($album);
 
         $this->entityManager->flush();
+    }
+
+    /**
+     * Copie la pochette en local. Sans effet si elle y est déjà. En cas d'échec, l'album
+     * garde sa copie précédente : comme la pochette elle-même, c'est un bonus.
+     */
+    public function storeCover(Album $album): void
+    {
+        $url = $album->getCoverUrl();
+
+        if (null !== $url) {
+            $album->setCoverPath($this->images->store($url, 'covers') ?? $album->getCoverPath());
+        }
     }
 
     private function upsertArtist(ArtistData $data): Artist

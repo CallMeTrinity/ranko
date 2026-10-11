@@ -29,7 +29,7 @@
                 <ul class="grid grid-cols-2 gap-3.5 sm:grid-cols-3 lg:grid-cols-4">
                     {% for album in albums %}
                         <li class="card relative flex flex-col overflow-hidden">
-                            {{ include('catalog/_cover.html.twig', {item: album, class: 'aspect-square w-full border-b-2 border-ink'}) }}
+                            {{ include('catalog/_cover.html.twig', {item: album, class: 'aspect-square w-full border-b-2 border-ink', sizes: '(min-width: 1024px) 240px, (min-width: 640px) 33vw, 50vw'}) }}
                             <div class="flex flex-col gap-0.5 p-3">
                                 <a href="{{ path('app_album_show', {id: album.id}) }}" class="leading-tight font-bold after:absolute after:inset-0">{{ album.name }}</a>
                                 <span class="font-mono text-xs text-ink-muted">{{ album.type.label }}{% if album.releaseYear %} · {{ album.releaseYear }}{% endif %}</span>

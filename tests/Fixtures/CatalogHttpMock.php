@@ -39,6 +39,14 @@ final class CatalogHttpMock
             return new MockResponse('Internal Server Error', ['http_code' => 500]);
         }
 
+        // Fichiers image des pochettes (les URLs listées dans cover-ok-computer.json).
+        if (str_starts_with($url, 'https://coverartarchive.org/release/')) {
+            return new MockResponse(
+                (string) file_get_contents(__DIR__.'/musicbrainz/cover.jpg'),
+                ['response_headers' => ['content-type' => 'image/jpeg']],
+            );
+        }
+
         foreach (self::ROUTES as $prefix => $fixture) {
             if (str_starts_with(substr($url, strlen('https://')), $prefix)) {
                 return new MockResponse(

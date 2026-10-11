@@ -1,7 +1,7 @@
 {# Un élément du catalogue sur une ligne : vignette, nom, contexte. Variables : item, cover_class (optionnel) #}
 {% set kind = item.kind.value %}
 <div class="flex items-center gap-2.5 min-w-0">
-    {{ include('catalog/_cover.html.twig', {item: item, class: 'size-[42px] rounded-tile ' ~ (cover_class ?? '')}) }}
+    {{ include('catalog/_cover.html.twig', {item: item, class: 'size-[42px] rounded-tile ' ~ (cover_class ?? ''), sizes: '42px'}) }}
     <div class="min-w-0">
         {% if kind == 'artist' %}
             <a href="{{ path('app_artist_show', {id: item.id}) }}" class="block truncate text-[15px] font-semibold">{{ item.name }}</a>

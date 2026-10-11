@@ -15,4 +15,18 @@ class AlbumRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Album::class);
     }
+
+    /**
+     * Albums dont la pochette n'est pas encore copiée en local.
+     *
+     * @return list<Album>
+     */
+    public function findWithRemoteCoverOnly(): array
+    {
+        return $this->createQueryBuilder('album')
+            ->where('album.coverUrl IS NOT NULL')
+            ->andWhere('album.coverPath IS NULL')
+            ->getQuery()
+            ->getResult();
+    }
 }

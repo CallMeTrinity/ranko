@@ -1,9 +1,17 @@
 {# Pochette d'un élément, ou aplat hachuré à la teinte stable quand il n'y en a pas.
-   Variables : item (nullable), class (taille et rayon), seed (optionnel, teinte de repli), alt (optionnel) #}
+   Variables : item (nullable), class (taille et rayon), sizes (largeur affichée, attribut HTML sizes),
+   seed (optionnel, teinte de repli), alt (optionnel)
+   sizes permet au navigateur de charger la plus petite variante suffisante : "42px" pour une
+   vignette, une media query quand la largeur dépend de l'écran. #}
 {% set kind = item ? item.kind.value : null %}
-{% set url = kind == 'album' ? item.coverUrl : (kind == 'track' ? item.album.coverUrl : null) %}
-{% if url %}
-    <img src="{{ url }}" alt="{{ alt ?? '' }}" loading="lazy" class="{{ class }} shrink-0 object-cover">
+{% set album = kind == 'album' ? item : (kind == 'track' ? item.album : null) %}
+{% if album and album.coverPath %}
+    <img src="{{ album.coverPath|imagine_filter('square_256') }}"
+         srcset="{% for width in [128, 256, 512, 1024] %}{{ album.coverPath|imagine_filter('square_' ~ width) }} {{ width }}w{{ not loop.last ? ', ' }}{% endfor %}"
+         sizes="{{ sizes ?? '100vw' }}" alt="{{ alt ?? '' }}" loading="lazy" decoding="async" class="{{ class }} shrink-0 object-cover">
+{% elseif album and album.coverUrl %}
+    {# Pas encore copiée en local (import en cours, ou téléchargement échoué) : image distante. #}
+    <img src="{{ album.coverUrl }}" alt="{{ alt ?? '' }}" loading="lazy" class="{{ class }} shrink-0 object-cover">
 {% else %}
     <span class="{{ class }} block shrink-0 cover-placeholder" style="--cover-hue: {{ ((seed ?? item.id ?? 0) * 47) % 360 }}" aria-hidden="true"></span>
 {% endif %}

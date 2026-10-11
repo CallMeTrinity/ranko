@@ -13,7 +13,7 @@
         <header class="card overflow-hidden">
             <div class="stripes-stack h-[30px]" aria-hidden="true"></div>
             <div class="flex flex-col gap-5 p-4 sm:flex-row sm:items-center">
-                {{ include('catalog/_cover.html.twig', {item: album, class: 'aspect-square w-full rounded-cover sm:w-56', alt: 'Pochette de ' ~ album.name}) }}
+                {{ include('catalog/_cover.html.twig', {item: album, class: 'aspect-square w-full rounded-cover sm:w-56', alt: 'Pochette de ' ~ album.name, sizes: '(min-width: 640px) 224px, 100vw'}) }}
                 <div class="flex flex-col gap-4">
                     <div class="flex flex-col gap-1">
                         <h1 class="text-3xl font-bold tracking-[-0.6px]">{{ album.name }}</h1>

@@ -91,6 +91,8 @@ final class CatalogImporterTest extends KernelTestCase
         self::assertSame('4:44', $tracks[0]->getFormattedDuration());
         self::assertSame(CatalogHttpMock::OK_COMPUTER_FIRST_RELEASE, $okComputer->getExternalId('musicbrainz-edition'));
         self::assertNotNull($okComputer->getCoverUrl());
+        self::assertNotNull($okComputer->getCoverPath());
+        self::assertFileExists(self::getContainer()->getParameter('app.media_dir').'/'.$okComputer->getCoverPath());
         self::assertNotNull($okComputer->getTracksImportedAt());
     }
 

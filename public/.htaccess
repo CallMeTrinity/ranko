@@ -17,6 +17,15 @@ DirectoryIndex index.php
     Options -MultiViews
 </IfModule>
 
+# Variantes d'images générées par LiipImagine. Leur URL change quand la source change
+# (voir App\Media\ImageStore), donc le navigateur peut les garder un an sans revalider.
+# Les URLs /resolve/ passent par PHP et redirigent : elles sont exclues.
+<IfModule mod_headers.c>
+    <If "%{REQUEST_URI} =~ m#^/media/cache/# && %{REQUEST_URI} !~ m#^/media/cache/resolve/#">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </If>
+</IfModule>
+
 <IfModule mod_rewrite.c>
     # This Option needs to be enabled for RewriteRule, otherwise it will show an error like
     # 'Options FollowSymLinks or SymLinksIfOwnerMatch is off which implies that RewriteRule directive is forbidden'

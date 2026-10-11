@@ -1,4 +1,8 @@
 {# @var field \EasyCorp\Bundle\EasyAdminBundle\Dto\FieldDto #}
-{% if field.value %}
+{# @var entity \EasyCorp\Bundle\EasyAdminBundle\Dto\EntityDto #}
+{% set path = entity.instance.coverPath %}
+{% if path %}
+    <img src="{{ path|imagine_filter('square_128') }}" alt="" width="48" height="48" loading="lazy">
+{% elseif field.value %}
     <img src="{{ field.value }}" alt="" width="48" height="48" loading="lazy">
 {% endif %}

@@ -8,7 +8,7 @@
     <input type="hidden" name="_token" value="{{ token }}">
     <button type="submit" class="card flex w-full cursor-pointer flex-col overflow-hidden text-left" data-duel-target="{{ side }}">
         <span class="{{ face.color }} flex h-[38px] w-full items-center px-3 font-mono text-[15px] font-medium">{{ face.label }}</span>
-        {{ include('catalog/_cover.html.twig', {item: choice, class: 'aspect-square w-full border-y-2 border-ink'}) }}
+        {{ include('catalog/_cover.html.twig', {item: choice, class: 'aspect-square w-full border-y-2 border-ink', sizes: '(min-width: 1024px) 490px, 50vw'}) }}
         <span class="flex min-h-[86px] w-full flex-col gap-0.5 p-3">
             <span class="text-lg leading-tight font-bold" data-duel-name>{{ choice.name }}</span>
             <span class="font-mono text-[13px] text-ink-muted">

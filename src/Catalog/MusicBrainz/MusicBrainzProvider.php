@@ -123,7 +123,9 @@ final class MusicBrainzProvider implements CatalogProviderInterface
 
         foreach ($data['images'] ?? [] as $image) {
             if ($image['front'] ?? false) {
-                return $image['thumbnails']['500'] ?? $image['image'] ?? null;
+                // 1200 px plutôt que l'original, qui peut peser plusieurs Mo : c'est la
+                // source des variantes redimensionnées, la plus grande fait 1024 px.
+                return $image['thumbnails']['1200'] ?? $image['thumbnails']['500'] ?? $image['image'] ?? null;
             }
         }
 

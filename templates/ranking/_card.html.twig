@@ -2,7 +2,7 @@
 <article class="card relative flex flex-col overflow-hidden">
     <div class="stripes-row h-1.5" aria-hidden="true"></div>
     <div class="flex gap-3.5 p-3.5">
-        {{ include('catalog/_cover.html.twig', {item: top|first ?: null, seed: ranking.id, class: 'size-[84px] rounded-tile'}) }}
+        {{ include('catalog/_cover.html.twig', {item: top|first ?: null, seed: ranking.id, class: 'size-[84px] rounded-tile', sizes: '84px'}) }}
         <div class="flex min-w-0 flex-1 flex-col gap-1.5">
             <h3 class="font-mono text-sm font-medium uppercase tracking-[0.5px]">
                 {# Le lien couvre toute la carte ; celui du pseudo passe au-dessus. #}

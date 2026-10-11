@@ -31,7 +31,7 @@ Settings > Secrets and variables > Actions :
 
 ## Pré-requis serveur
 
-- PHP ≥ 8.4.1 avec `ctype`, `iconv`, `intl`, `pdo_mysql`, et MariaDB 10.11. Composer n'est pas nécessaire, `vendor/` arrive avec la release.
+- PHP ≥ 8.4.1 avec `ctype`, `iconv`, `intl`, `pdo_mysql`, `gd` (redimensionnement des images), et MariaDB 10.11. Composer n'est pas nécessaire, `vendor/` arrive avec la release.
 - Document root sur `APP_DIR/public`.
 - Un fichier `APP_DIR/.env.local`, jamais écrasé par le rsync :
 
@@ -110,3 +110,19 @@ bin/console app:user:create --admin
 ```
 
 La commande demande l'email, le mot de passe (saisie masquée) et le pseudo.
+
+## Images (pochettes)
+
+Les pochettes sont copiées en local dans `var/media/` à l'import des titres, puis
+redimensionnées à la demande par LiipImagine dans `public/media/cache/`. Les deux
+dossiers survivent aux déploiements (exclus du rsync). Apache sert les variantes avec un
+cache navigateur d'un an (`public/.htaccess`, nécessite `mod_headers`).
+
+Pour copier les pochettes importées avant cette mise en place, une fois, sur le serveur :
+
+```bash
+php bin/console app:catalog:store-covers
+```
+
+La commande ne traite que les pochettes pas encore copiées : la relancer reprend les échecs
+(miroirs archive.org parfois indisponibles).

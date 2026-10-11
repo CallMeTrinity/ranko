@@ -34,6 +34,12 @@ class Album extends CatalogItem
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $coverUrl = null;
 
+    /**
+     * Copie locale de la pochette, relative au dossier des médias (voir App\Media\ImageStore).
+     */
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $coverPath = null;
+
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $tracksImportedAt = null;
 
@@ -127,6 +133,18 @@ class Album extends CatalogItem
     public function setCoverUrl(?string $coverUrl): static
     {
         $this->coverUrl = $coverUrl;
+
+        return $this;
+    }
+
+    public function getCoverPath(): ?string
+    {
+        return $this->coverPath;
+    }
+
+    public function setCoverPath(?string $coverPath): static
+    {
+        $this->coverPath = $coverPath;
 
         return $this;
     }
