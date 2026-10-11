@@ -1,9 +1,141 @@
 @import "tailwindcss";
+@import "./token.css";
 
-/*
- * Tokens de design : à remplir avec la charte (couleurs, typo, rayons...).
- * Pour l'instant les templates n'utilisent que des utilitaires de mise en page
- * (flex, grid, espacements, tailles), aucun style visuel.
- */
-@theme {
+@layer base {
+    body {
+        background: var(--color-paper);
+        color: var(--color-ink);
+        font-family: var(--font-sans);
+    }
+
+    a:hover {
+        opacity: 0.75;
+    }
+
+    :focus-visible {
+        outline: 2px solid var(--color-ink);
+        outline-offset: 2px;
+    }
+
+    /* Champs de saisie, y compris ceux rendus par form_row(). */
+    input:where(:not([type=checkbox], [type=radio], [type=hidden])),
+    select,
+    textarea {
+        min-height: 3rem;
+        padding: 0 0.875rem;
+        border: 2px solid var(--color-ink);
+        border-radius: var(--radius-control);
+        background: var(--color-card);
+    }
+
+    input[type=checkbox] {
+        accent-color: var(--color-ink);
+        width: 1.125rem;
+        height: 1.125rem;
+    }
+}
+
+/* Bandes de la cassette empilées : en tête de page et sur les jaquettes. */
+@utility stripes-stack {
+    background: linear-gradient(to bottom,
+        var(--color-stripe-1) 0 20%, var(--color-stripe-2) 20% 40%, var(--color-stripe-3) 40% 60%,
+        var(--color-stripe-4) 60% 80%, var(--color-stripe-5) 80% 100%);
+}
+
+/* Bandes côte à côte : liseré en haut des cartes de classement. */
+@utility stripes-row {
+    background: linear-gradient(to right,
+        var(--color-stripe-1) 0 20%, var(--color-stripe-2) 20% 40%, var(--color-stripe-3) 40% 60%,
+        var(--color-stripe-4) 60% 80%, var(--color-stripe-5) 80% 100%);
+}
+
+/* Pochette absente : aplat dont la teinte vient de --cover-hue, hachures par-dessus. */
+@utility cover-placeholder {
+    background:
+        repeating-linear-gradient(135deg, var(--cover-hatch) 0 8px, transparent 8px 16px),
+        oklch(var(--cover-lightness) var(--cover-chroma) var(--cover-hue, 25));
+}
+
+/* Jaquette : cadre épais, coins arrondis, fond carton. */
+@utility card {
+    border: 2px solid var(--color-ink);
+    border-radius: var(--radius-card);
+    background: var(--color-card);
+}
+
+/* Chiffre du compteur de bande. */
+@utility counter-digit {
+    display: grid;
+    place-items: center;
+    border-radius: var(--radius-tile);
+    background: var(--color-ink);
+    color: var(--color-paper);
+    font-family: var(--font-mono);
+    font-weight: 500;
+}
+
+@utility btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 2.75rem;
+    padding: 0 0.875rem;
+    border: 2px solid var(--color-ink);
+    border-radius: var(--radius-control);
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+
+    &:disabled {
+        cursor: default;
+        opacity: 0.5;
+    }
+}
+
+@utility btn-primary {
+    background: var(--color-ink);
+    color: var(--color-paper);
+}
+
+@utility btn-lg {
+    min-height: 3rem;
+    padding: 0 1.125rem;
+}
+
+/* Bouton carré discret (flèches, menus), sans bordure. */
+@utility btn-icon {
+    display: inline-grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    flex: none;
+    border-radius: 10px;
+    background: var(--color-sunken);
+    cursor: pointer;
+}
+
+@layer components {
+    /* Rang dans un classement : les cinq premiers prennent les couleurs de la bande.
+       Calculé en CSS pour rester juste après un glisser-déposer. */
+    .rank-list > :nth-child(1) [data-rank] { background: var(--color-stripe-1); }
+    .rank-list > :nth-child(2) [data-rank] { background: var(--color-stripe-2); }
+    .rank-list > :nth-child(3) [data-rank] { background: var(--color-stripe-3); }
+    .rank-list > :nth-child(4) [data-rank] { background: var(--color-stripe-4); }
+    .rank-list > :nth-child(5) [data-rank] { background: var(--color-stripe-5); }
+
+    /* Duel : la face choisie bascule, l'autre s'efface pendant l'envoi. */
+    [data-duel-target] {
+        transition: opacity 0.25s, transform 0.25s;
+    }
+
+    [data-duel-picked=left] [data-duel-target=right],
+    [data-duel-picked=right] [data-duel-target=left] {
+        opacity: 0.35;
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+        [data-duel-picked=left] [data-duel-target=left] { transform: rotate(-2deg) scale(1.03); }
+        [data-duel-picked=right] [data-duel-target=right] { transform: rotate(2deg) scale(1.03); }
+    }
 }

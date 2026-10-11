@@ -3,6 +3,6 @@
     <form method="post" action="{{ path('app_ranking_add_item') }}">
         <input type="hidden" name="itemId" value="{{ item.id }}">
         <input type="hidden" name="_token" value="{{ csrf_token('ranking-add') }}">
-        <button type="submit" class="border px-3 py-1" title="{{ label }}">{{ label }}</button>
+        <button type="submit" class="btn" title="{{ label }}">{{ label }}</button>
     </form>
 {% endif %}

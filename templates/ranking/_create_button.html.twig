@@ -4,8 +4,8 @@
         <input type="hidden" name="kind" value="{{ kind }}">
         <input type="hidden" name="scopeId" value="{{ scope ? scope.id : '' }}">
         <input type="hidden" name="_token" value="{{ csrf_token('ranking-create') }}">
-        <button type="submit" class="border px-3 py-1">{{ label }}</button>
+        <button type="submit" class="btn btn-primary">{{ label }}</button>
     </form>
 {% else %}
-    <a href="{{ path('app_login') }}" class="border px-3 py-1">{{ label }}</a>
+    <a href="{{ path('app_login') }}" class="btn btn-primary">{{ label }}</a>
 {% endif %}

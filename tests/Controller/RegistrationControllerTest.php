@@ -24,7 +24,7 @@ final class RegistrationControllerTest extends WebTestCase
 
         self::assertResponseRedirects('/');
         $client->followRedirect();
-        self::assertSelectorTextContains('nav', 'Mes classements');
+        self::assertSelectorTextContains('nav', 'Classements');
         self::assertNotNull(self::em()->getRepository(User::class)->findOneBy(['username' => 'carol']));
     }
 

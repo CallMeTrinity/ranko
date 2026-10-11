@@ -3,19 +3,21 @@
 {% block title %}Mes classements · Ranko{% endblock %}
 
 {% block body %}
-    <h1 class="mb-6 text-2xl">Mes classements</h1>
+    <div class="flex flex-col gap-5">
+        <h1 class="text-[30px] font-bold tracking-[-0.6px]">Mes classements</h1>
 
-    {% if rankings is empty %}
-        <p>Aucun classement pour l'instant. Pars d'un <a href="{{ path('app_artist_index') }}" class="underline">artiste</a> pour en créer un.</p>
-    {% else %}
-        <ul class="flex flex-col divide-y">
-            {% for ranking in rankings %}
-                <li class="flex flex-wrap items-center gap-x-4 gap-y-1 py-3">
-                    <a href="{{ path('app_ranking_show', {id: ranking.id}) }}" class="flex-1">{{ ranking.title }}</a>
-                    <span class="text-sm">{{ ranking.entries|length }} éléments</span>
-                    <span class="text-sm">{{ ranking.visibility.label }}</span>
-                </li>
-            {% endfor %}
-        </ul>
-    {% endif %}
+        {% if rankings is empty %}
+            <p>Aucun classement pour l'instant. Pars d'un <a href="{{ path('app_artist_index') }}" class="underline">artiste</a> pour en créer un.</p>
+        {% else %}
+            <ul class="flex flex-col gap-2">
+                {% for ranking in rankings %}
+                    <li class="card relative flex min-h-[62px] flex-wrap items-center gap-x-4 gap-y-1 overflow-hidden py-2 pr-4 pl-5">
+                        <span class="stripes-stack absolute inset-y-0 left-0 w-1.5" aria-hidden="true"></span>
+                        <a href="{{ path('app_ranking_show', {id: ranking.id}) }}" class="flex-1 font-mono text-sm font-medium uppercase after:absolute after:inset-0">{{ ranking.title }}</a>
+                        <span class="font-mono text-xs text-ink-muted">{{ ranking.entries|length }} éléments · {{ ranking.visibility.label }}</span>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </div>
 {% endblock %}

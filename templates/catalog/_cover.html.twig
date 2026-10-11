@@ -1,0 +1,9 @@
+{# Pochette d'un élément, ou aplat hachuré à la teinte stable quand il n'y en a pas.
+   Variables : item (nullable), class (taille et rayon), seed (optionnel, teinte de repli), alt (optionnel) #}
+{% set kind = item ? item.kind.value : null %}
+{% set url = kind == 'album' ? item.coverUrl : (kind == 'track' ? item.album.coverUrl : null) %}
+{% if url %}
+    <img src="{{ url }}" alt="{{ alt ?? '' }}" loading="lazy" class="{{ class }} shrink-0 object-cover">
+{% else %}
+    <span class="{{ class }} block shrink-0 cover-placeholder" style="--cover-hue: {{ ((seed ?? item.id ?? 0) * 47) % 360 }}" aria-hidden="true"></span>
+{% endif %}

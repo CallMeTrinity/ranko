@@ -3,18 +3,23 @@
 {% block title %}Explorer · Ranko{% endblock %}
 
 {% block body %}
-    <h1 class="mb-4 text-2xl">Classements de la communauté</h1>
+    <div class="flex flex-col gap-5">
+        <h1 class="text-[30px] leading-tight font-bold tracking-[-0.6px]">Classements de la communauté</h1>
 
-    <nav class="mb-6 flex flex-wrap gap-2" aria-label="Filtrer par type">
-        <a href="{{ path('app_explore') }}" class="border px-3 py-1" {% if kind is null %}aria-current="page"{% endif %}>Tout</a>
-        {% for k in kinds %}
-            <a href="{{ path('app_explore', {kind: k.value}) }}" class="border px-3 py-1" {% if kind == k %}aria-current="page"{% endif %}>{{ k.label }}</a>
-        {% endfor %}
-    </nav>
+        <nav class="flex flex-wrap gap-2" aria-label="Filtrer par type">
+            {% set filters = [{label: 'Tout', href: path('app_explore'), current: kind is null}] %}
+            {% for k in kinds %}
+                {% set filters = filters|merge([{label: k.label, href: path('app_explore', {kind: k.value}), current: kind == k}]) %}
+            {% endfor %}
+            {% for filter in filters %}
+                <a href="{{ filter.href }}" class="btn {{ filter.current ? 'btn-primary' }}" {% if filter.current %}aria-current="page"{% endif %}>{{ filter.label }}</a>
+            {% endfor %}
+        </nav>
 
-    {% if rankings is empty %}
-        <p>Aucun classement public pour l'instant.</p>
-    {% else %}
-        {{ include('ranking/_list.html.twig') }}
-    {% endif %}
+        {% if rankings is empty %}
+            <p>Aucun classement public pour l'instant.</p>
+        {% else %}
+            {{ include('ranking/_list.html.twig') }}
+        {% endif %}
+    </div>
 {% endblock %}

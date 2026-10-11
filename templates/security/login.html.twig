@@ -4,26 +4,26 @@
 
 {% block body %}
     <div class="mx-auto max-w-sm">
-        <h1 class="mb-6 text-2xl">Connexion</h1>
+        <h1 class="mb-6 text-[30px] font-bold tracking-[-0.6px]">Connexion</h1>
 
         {% if error %}
-            <p class="mb-4 border px-4 py-2" role="alert">{{ error.messageKey|trans(error.messageData, 'security') }}</p>
+            <p class="card mb-4 px-4 py-3 text-sm font-medium" role="alert">{{ error.messageKey|trans(error.messageData, 'security') }}</p>
         {% endif %}
 
         <form method="post" class="flex flex-col gap-4">
-            <label class="flex flex-col gap-1">
+            <label class="flex flex-col gap-1.5 font-semibold">
                 Email
-                <input type="email" name="_username" value="{{ last_username }}" autocomplete="email" required autofocus class="border px-2 py-1">
+                <input type="email" name="_username" value="{{ last_username }}" autocomplete="email" required autofocus class="font-normal">
             </label>
-            <label class="flex flex-col gap-1">
+            <label class="flex flex-col gap-1.5 font-semibold">
                 Mot de passe
-                <input type="password" name="_password" autocomplete="current-password" required class="border px-2 py-1">
+                <input type="password" name="_password" autocomplete="current-password" required class="font-normal">
             </label>
             <label class="flex items-center gap-2">
                 <input type="checkbox" name="_remember_me"> Rester connecté
             </label>
             <input type="hidden" name="_csrf_token" data-controller="csrf-protection" value="{{ csrf_token('authenticate') }}">
-            <button type="submit" class="border px-4 py-2">Se connecter</button>
+            <button type="submit" class="btn btn-lg btn-primary">Se connecter</button>
         </form>
 
         <p class="mt-6">Pas encore de compte ? <a href="{{ path('app_register') }}" class="underline">S'inscrire</a></p>

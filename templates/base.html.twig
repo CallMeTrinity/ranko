@@ -6,6 +6,9 @@
         <title>{% block title %}Ranko{% endblock %}</title>
         {% block meta %}{% endblock %}
         <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>🏆</text></svg>">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap">
         {% block stylesheets %}
         {% endblock %}
 
@@ -14,33 +17,58 @@
         {% endblock %}
     </head>
     <body class="min-h-screen flex flex-col">
-        <header class="border-b">
-            <nav class="mx-auto max-w-5xl px-4 py-3 flex flex-wrap items-center gap-x-6 gap-y-2">
-                <a href="{{ path('app_home') }}" class="font-bold">Ranko</a>
-                <a href="{{ path('app_artist_index') }}">Artistes</a>
-                <a href="{{ path('app_explore') }}">Explorer</a>
-                {% if app.user %}
-                    <a href="{{ path('app_ranking_index') }}">Mes classements</a>
+        {% set route = app.request.attributes.get('_route', '') %}
+        {% set section =
+            route starts with 'app_artist' or route == 'app_album_show' ? 'artists' :
+            (route == 'app_explore' or route == 'app_ranking_compare' ? 'explore' :
+            (route starts with 'app_ranking' or route starts with 'app_duel' ? 'rankings' :
+            (route == 'app_profile' and app.user and app.request.attributes.get('username') == app.user.username ? 'profile' :
+            (route == 'app_home' ? 'home' : (route == 'app_login' ? 'login' : null))))) %}
+
+        <div class="stripes-stack h-[35px] shrink-0" aria-hidden="true"></div>
+
+        <header class="mx-auto flex w-full max-w-5xl items-center gap-6 px-5 pt-4 md:pt-5">
+            <a href="{{ path('app_home') }}" class="text-[26px] font-bold tracking-[-0.5px]">Ranko</a>
+
+            {% block navigation %}
+                <nav aria-label="Navigation principale"
+                     class="fixed inset-x-0 bottom-0 z-20 flex h-[84px] justify-around border-t-2 border-ink bg-paper pt-3 text-xs font-medium text-ink-muted
+                            md:static md:h-auto md:justify-start md:gap-6 md:border-0 md:bg-transparent md:pt-0 md:text-sm">
+                    {% set tabs = [
+                        {key: 'home', label: 'Accueil', href: path('app_home')},
+                        {key: 'artists', label: 'Artistes', href: path('app_artist_index')},
+                        {key: 'explore', label: 'Explorer', href: path('app_explore')},
+                    ]|merge(app.user ? [
+                        {key: 'rankings', label: 'Classements', href: path('app_ranking_index')},
+                        {key: 'profile', label: 'Profil', href: path('app_profile', {username: app.user.username})},
+                    ] : [
+                        {key: 'login', label: 'Connexion', href: path('app_login')},
+                    ]) %}
+                    {% for tab in tabs %}
+                        <a href="{{ tab.href }}"
+                           {% if tab.key == section %}aria-current="page" class="font-bold text-ink underline decoration-2 underline-offset-4"{% endif %}>
+                            {{- tab.label -}}
+                        </a>
+                    {% endfor %}
+                </nav>
+            {% endblock %}
+
+            <div class="ml-auto flex items-center gap-4 text-sm">
+                {% if is_granted('ROLE_ADMIN') %}
+                    <a href="{{ path('admin') }}" class="text-ink-muted underline">Back-office</a>
                 {% endif %}
-                <div class="ml-auto flex items-center gap-4">
-                    {% if is_granted('ROLE_ADMIN') %}
-                        <a href="{{ path('admin') }}">Back-office</a>
-                    {% endif %}
-                    {% if app.user %}
-                        <a href="{{ path('app_profile', {username: app.user.username}) }}">{{ app.user.username }}</a>
-                        <a href="{{ path('app_logout') }}">Déconnexion</a>
-                    {% else %}
-                        <a href="{{ path('app_login') }}">Connexion</a>
-                        <a href="{{ path('app_register') }}">Inscription</a>
-                    {% endif %}
-                </div>
-            </nav>
+                {% if app.user %}
+                    <a href="{{ path('app_profile', {username: app.user.username}) }}" class="rounded-cover border-2 border-ink px-2 py-1 font-mono text-[13px]">{{ app.user.username }}</a>
+                {% else %}
+                    <a href="{{ path('app_register') }}" class="rounded-cover border-2 border-ink px-2 py-1 font-mono text-[13px]">Inscription</a>
+                {% endif %}
+            </div>
         </header>
 
-        <main class="mx-auto w-full max-w-5xl px-4 py-8 flex-1">
+        <main class="mx-auto w-full max-w-5xl flex-1 px-5 pt-6 pb-28 md:pb-12">
             {% for type, messages in app.flashes %}
                 {% for message in messages %}
-                    <p class="mb-4 border px-4 py-2" role="status" data-flash="{{ type }}">{{ message }}</p>
+                    <p class="card mb-4 px-4 py-3 text-sm font-medium" role="status" data-flash="{{ type }}">{{ message }}</p>
                 {% endfor %}
             {% endfor %}
 

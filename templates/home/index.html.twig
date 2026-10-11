@@ -1,25 +1,26 @@
 {% extends 'base.html.twig' %}
 
 {% block body %}
-    <h1 class="text-3xl">Ranko</h1>
-    <p class="mt-2">Classe tes artistes, albums et titres préférés.</p>
+    <div class="flex flex-col gap-6">
+        <h1 class="max-w-xl text-[30px] leading-[1.12] font-semibold tracking-[-0.6px] text-pretty md:text-5xl">Classe tes artistes, albums et titres préférés.</h1>
 
-    <div class="mt-6 flex flex-wrap gap-2">
-        <a href="{{ path('app_artist_index') }}" class="border px-4 py-2">Parcourir les artistes</a>
-        {% if app.user %}
-            <a href="{{ path('app_ranking_index') }}" class="border px-4 py-2">Mes classements</a>
-        {% else %}
-            <a href="{{ path('app_register') }}" class="border px-4 py-2">Créer un compte</a>
+        <div class="flex flex-wrap gap-2">
+            <a href="{{ path('app_artist_index') }}" class="btn btn-lg btn-primary">Parcourir les artistes</a>
+            {% if app.user %}
+                <a href="{{ path('app_ranking_index') }}" class="btn btn-lg">Mes classements</a>
+            {% else %}
+                <a href="{{ path('app_register') }}" class="btn btn-lg">Créer un compte</a>
+            {% endif %}
+        </div>
+
+        {% if rankings is not empty %}
+            <section class="flex flex-col gap-3.5" aria-labelledby="latest-title">
+                <div class="flex items-baseline justify-between gap-4">
+                    <h2 id="latest-title" class="text-lg font-bold">Derniers classements publics</h2>
+                    <a href="{{ path('app_explore') }}" class="text-sm font-semibold underline">Tout voir</a>
+                </div>
+                {{ include('ranking/_list.html.twig') }}
+            </section>
         {% endif %}
     </div>
-
-    {% if rankings is not empty %}
-        <section class="mt-10" aria-labelledby="latest-title">
-            <div class="mb-4 flex items-baseline justify-between gap-4">
-                <h2 id="latest-title" class="text-xl">Derniers classements publics</h2>
-                <a href="{{ path('app_explore') }}" class="text-sm">Tout voir</a>
-            </div>
-            {{ include('ranking/_list.html.twig') }}
-        </section>
-    {% endif %}
 {% endblock %}

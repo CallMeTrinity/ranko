@@ -4,14 +4,15 @@
 
 {% block body %}
     <div class="mx-auto max-w-sm">
-        <h1 class="mb-6 text-2xl">Créer un compte</h1>
+        <h1 class="mb-6 text-[30px] font-bold tracking-[-0.6px]">Créer un compte</h1>
 
+        {% set field = {row_attr: {class: 'flex flex-col gap-1.5 font-semibold'}, attr: {class: 'font-normal'}} %}
         {{ form_start(form, {attr: {class: 'flex flex-col gap-4'}}) }}
-            {{ form_row(form.email) }}
-            {{ form_row(form.username) }}
-            {{ form_row(form.plainPassword.first) }}
-            {{ form_row(form.plainPassword.second) }}
-            <button type="submit" class="border px-4 py-2">S'inscrire</button>
+            {{ form_row(form.email, field) }}
+            {{ form_row(form.username, field) }}
+            {{ form_row(form.plainPassword.first, field) }}
+            {{ form_row(form.plainPassword.second, field) }}
+            <button type="submit" class="btn btn-lg btn-primary">S'inscrire</button>
         {{ form_end(form) }}
 
         <p class="mt-6">Déjà inscrit ? <a href="{{ path('app_login') }}" class="underline">Se connecter</a></p>

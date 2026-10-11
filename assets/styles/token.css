@@ -1,0 +1,44 @@
+/*
+ * Tokens de design Ranko, direction « K7 » : rétro, fond crème, bandes de couleur
+ * façon cassette des années 70, chiffres en monospace comme un compteur de bande.
+ *
+ * Déclarés dans @theme : Tailwind les publie en variables CSS sur :root et en tire
+ * les utilitaires (bg-paper, text-ink, rounded-card, font-mono...). « static » les
+ * garde dans le CSS même quand aucun utilitaire ne les utilise.
+ */
+@theme static {
+    /* Palette fermée : seules les couleurs de la charte existent. */
+    --color-*: initial;
+
+    /* Surfaces et encre */
+    --color-paper: #f2e8d5;      /* fond de page crème */
+    --color-card: #fbf5e9;       /* jaquettes, cartes, lignes */
+    --color-sunken: #efe3cc;     /* boutons secondaires, rangs hors top 5 */
+    --color-rule: #d9cbb0;       /* séparateurs fins */
+    --color-ink: #2b2118;        /* texte, bordures, boutons pleins */
+    --color-ink-muted: #6e5f4f;  /* texte secondaire */
+
+    /* Bandes de la cassette, de haut en bas */
+    --color-stripe-1: oklch(0.68 0.15 25);   /* rouge, Face A, écart > 1 */
+    --color-stripe-2: oklch(0.68 0.15 55);   /* orange */
+    --color-stripe-3: oklch(0.68 0.15 85);   /* jaune, écart de 1 */
+    --color-stripe-4: oklch(0.68 0.15 165);  /* vert, même rang */
+    --color-stripe-5: oklch(0.68 0.15 245);  /* bleu, Face B */
+
+    /* Typographie */
+    --font-sans: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+    --font-mono: 'DM Mono', ui-monospace, monospace;
+
+    /* Rayons */
+    --radius-tile: 6px;      /* vignettes, chiffres du compteur, badges */
+    --radius-cover: 8px;     /* grandes pochettes, pastille du pseudo */
+    --radius-control: 12px;  /* boutons, champs, lignes de classement */
+    --radius-card: 16px;     /* jaquettes et cartes */
+}
+
+/* Pochettes sans image : teinte calculée par élément, hachures blanches à 135°. */
+:root {
+    --cover-lightness: 0.7;
+    --cover-chroma: 0.13;
+    --cover-hatch: rgb(255 255 255 / 0.18);
+}

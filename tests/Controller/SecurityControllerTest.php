@@ -19,7 +19,7 @@ final class SecurityControllerTest extends WebTestCase
 
         self::assertResponseRedirects();
         $client->followRedirect();
-        self::assertSelectorTextContains('nav', 'Déconnexion');
+        self::assertSelectorTextContains('nav', 'Profil');
     }
 
     public function testLoginWithWrongPassword(): void

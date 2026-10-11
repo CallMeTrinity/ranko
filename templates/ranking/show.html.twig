@@ -22,112 +22,140 @@
 {% endblock %}
 
 {% block body %}
-    <header class="mb-6 flex flex-col gap-4">
-        <div>
-            <h1 class="text-3xl">{{ ranking.title }}</h1>
-            <p class="text-sm">
-                par <a href="{{ path('app_profile', {username: ranking.owner.username}) }}">{{ ranking.owner.username }}</a> · {{ ranking.visibility.label }} · mis à jour le {{ ranking.updatedAt|date('d/m/Y') }}
-            </p>
-        </div>
+    {% set items = ranking.items %}
+    {% set share_url = url('app_ranking_show', {id: ranking.id}) %}
 
-        {% if ranking.public %}
-            <div data-controller="clipboard" data-clipboard-text-value="{{ url('app_ranking_show', {id: ranking.id}) }}" class="flex flex-wrap items-center gap-2">
-                <input type="text" readonly value="{{ url('app_ranking_show', {id: ranking.id}) }}" aria-label="Lien de partage" class="flex-1 border px-2 py-1">
-                <button type="button" class="border px-3 py-1" data-action="clipboard#copy" data-clipboard-target="button">Copier le lien</button>
+    <div class="flex flex-col gap-[18px]">
+        <nav class="text-sm text-ink-muted">
+            {% if can_edit %}
+                <a href="{{ path('app_ranking_index') }}">‹ Mes classements</a>
+            {% else %}
+                <a href="{{ path('app_profile', {username: ranking.owner.username}) }}">‹ {{ ranking.owner.username }}</a>
+            {% endif %}
+        </nav>
+
+        <header class="card overflow-hidden">
+            <div class="stripes-stack h-[30px]" aria-hidden="true"></div>
+            <div class="flex items-center gap-3.5 p-4">
+                {{ include('catalog/_cover.html.twig', {item: items|first ?: null, seed: ranking.id, class: 'size-24 rounded-cover'}) }}
+                <div class="flex min-w-0 flex-col gap-1.5">
+                    <h1 class="font-mono text-[19px] leading-tight font-medium uppercase md:text-2xl">{{ ranking.title }}</h1>
+                    <p class="text-[13px] leading-snug text-ink-muted">
+                        par <a href="{{ path('app_profile', {username: ranking.owner.username}) }}" class="underline">{{ ranking.owner.username }}</a> · {{ ranking.visibility.label }} · mis à jour le {{ ranking.updatedAt|date('d/m/Y') }}
+                    </p>
+                </div>
             </div>
-        {% elseif can_edit %}
-            <p class="text-sm">Ce classement est privé : rends-le public pour le partager.</p>
+        </header>
+
+        {% if can_edit or ranking.public %}
+            <div class="flex flex-col gap-3" {% if ranking.public %}data-controller="clipboard" data-clipboard-text-value="{{ share_url }}"{% endif %}>
+                <div class="flex flex-wrap gap-2">
+                    {% if can_edit %}
+                        {% if active_duel %}
+                            <a href="{{ path('app_duel_show', {id: ranking.id}) }}" class="btn btn-primary">Reprendre le duel</a>
+                        {% elseif ranking.entries|length >= 2 %}
+                            <form method="post" action="{{ path('app_duel_start_sort', {id: ranking.id}) }}">
+                                <input type="hidden" name="_token" value="{{ token }}">
+                                <button type="submit" class="btn btn-primary">Classer par duel</button>
+                            </form>
+                        {% endif %}
+                    {% endif %}
+                    {% if ranking.public %}
+                        <button type="button" class="btn" data-action="clipboard#copy" data-clipboard-target="button">Copier le lien</button>
+                    {% endif %}
+                    {% if can_edit %}
+                        <form method="post" action="{{ path('app_ranking_visibility', {id: ranking.id}) }}">
+                            <input type="hidden" name="_token" value="{{ token }}">
+                            <button type="submit" class="btn">{{ ranking.public ? 'Rendre privé' : 'Rendre public' }}</button>
+                        </form>
+                        <form method="post" action="{{ path('app_ranking_delete', {id: ranking.id}) }}" data-turbo-confirm="Supprimer ce classement ?">
+                            <input type="hidden" name="_token" value="{{ token }}">
+                            <button type="submit" class="btn">Supprimer</button>
+                        </form>
+                    {% endif %}
+                </div>
+                {% if ranking.public %}
+                    <input type="text" readonly value="{{ share_url }}" aria-label="Lien de partage" class="w-full font-mono text-[13px]">
+                {% else %}
+                    <p class="text-[13px] text-ink-muted">Ce classement est privé : rends-le public pour le partager.</p>
+                {% endif %}
+            </div>
         {% endif %}
 
         {% if comparable is not empty %}
             <div class="flex flex-wrap items-center gap-2">
-                <span>Comparer avec :</span>
+                <span class="text-sm font-semibold">Comparer avec :</span>
                 {% for mine in comparable %}
-                    <a href="{{ path('app_ranking_compare', {id: mine.id, otherId: ranking.id}) }}" class="border px-3 py-1">{{ mine.title }}</a>
+                    <a href="{{ path('app_ranking_compare', {id: mine.id, otherId: ranking.id}) }}" class="btn">{{ mine.title }}</a>
                 {% endfor %}
             </div>
         {% endif %}
 
-        {% if can_edit %}
-            <div class="flex flex-wrap gap-2">
-                {% if active_duel %}
-                    <a href="{{ path('app_duel_show', {id: ranking.id}) }}" class="border px-3 py-1">Reprendre le duel</a>
-                {% elseif ranking.entries|length >= 2 %}
-                    <form method="post" action="{{ path('app_duel_start_sort', {id: ranking.id}) }}">
+        {% if missing_items is not empty %}
+            <section class="card flex flex-col gap-3 p-4" aria-labelledby="missing-title">
+                <h2 id="missing-title" class="font-bold">{{ missing_items|length }} élément{{ missing_items|length > 1 ? 's' }} pas encore classé{{ missing_items|length > 1 ? 's' }}</h2>
+                <ul class="text-sm">
+                    {% for item in missing_items %}<li>{{ item.name }}</li>{% endfor %}
+                </ul>
+                <div class="flex flex-wrap gap-2">
+                    <form method="post" action="{{ path('app_duel_insert_missing', {id: ranking.id}) }}">
                         <input type="hidden" name="_token" value="{{ token }}">
-                        <button type="submit" class="border px-3 py-1">Classer par duel</button>
+                        <button type="submit" class="btn btn-primary">Placer par duel</button>
                     </form>
+                    <form method="post" action="{{ path('app_ranking_append_missing', {id: ranking.id}) }}">
+                        <input type="hidden" name="_token" value="{{ token }}">
+                        <button type="submit" class="btn">Ajouter à la fin</button>
+                    </form>
+                </div>
+            </section>
+        {% endif %}
+
+        {% if items is empty %}
+            <p>Ce classement est vide.{% if can_edit and ranking.scope is null %} Ajoute des éléments depuis les pages <a href="{{ path('app_artist_index') }}" class="underline">artistes</a> et albums.{% endif %}</p>
+        {% else %}
+            <div class="flex flex-col gap-2">
+                {% if can_edit %}
+                    <p class="text-[13px] text-ink-muted" data-sortable-status aria-live="polite">Glisse les éléments, ou utilise les flèches, pour changer l'ordre.</p>
                 {% endif %}
-                <form method="post" action="{{ path('app_ranking_visibility', {id: ranking.id}) }}">
-                    <input type="hidden" name="_token" value="{{ token }}">
-                    <button type="submit" class="border px-3 py-1">{{ ranking.public ? 'Rendre privé' : 'Rendre public' }}</button>
-                </form>
-                <form method="post" action="{{ path('app_ranking_delete', {id: ranking.id}) }}" data-turbo-confirm="Supprimer ce classement ?">
-                    <input type="hidden" name="_token" value="{{ token }}">
-                    <button type="submit" class="border px-3 py-1">Supprimer</button>
-                </form>
+                <ol class="rank-list flex flex-col gap-2"
+                    {% if can_edit %}
+                        data-controller="sortable"
+                        data-sortable-url-value="{{ path('app_ranking_order', {id: ranking.id}) }}"
+                        data-sortable-token-value="{{ token }}"
+                    {% endif %}>
+                    {% for item in items %}
+                        <li class="flex h-[62px] items-center gap-2.5 rounded-control border-2 border-ink bg-card pr-1.5" {% if can_edit %}data-item-id="{{ item.id }}"{% endif %}>
+                            <span data-rank
+                                  {% if can_edit %}data-sortable-handle title="Glisser pour déplacer"{% endif %}
+                                  class="grid w-[46px] shrink-0 place-items-center self-stretch rounded-l-[10px] border-r-2 border-ink bg-sunken font-mono text-[17px] font-medium {{ can_edit ? 'cursor-grab select-none' }}">
+                                <span data-sortable-position>{{ '%02d'|format(loop.index) }}</span>
+                            </span>
+                            <div class="min-w-0 flex-1">{{ include('catalog/_item.html.twig', {item: item, cover_class: can_edit ? 'max-sm:hidden'}) }}</div>
+                            {% if can_edit %}
+                                <div class="flex shrink-0 gap-1">
+                                    <button type="button" class="btn-icon" data-action="sortable#moveUp" aria-label="Monter {{ item.name }}">↑</button>
+                                    <button type="button" class="btn-icon" data-action="sortable#moveDown" aria-label="Descendre {{ item.name }}">↓</button>
+                                    <details class="relative">
+                                        <summary class="btn-icon list-none [&::-webkit-details-marker]:hidden" aria-label="Autres actions pour {{ item.name }}">⋯</summary>
+                                        <div class="card absolute top-full right-0 z-10 mt-1 flex w-max flex-col p-1 text-sm font-semibold">
+                                            <form method="post" action="{{ path('app_duel_place_item', {id: ranking.id}) }}">
+                                                <input type="hidden" name="itemId" value="{{ item.id }}">
+                                                <input type="hidden" name="_token" value="{{ token }}">
+                                                <button type="submit" class="w-full cursor-pointer rounded-tile px-3 py-2.5 text-left hover:bg-sunken">Replacer par duel</button>
+                                            </form>
+                                            <form method="post" action="{{ path('app_ranking_remove_item', {id: ranking.id}) }}">
+                                                <input type="hidden" name="itemId" value="{{ item.id }}">
+                                                <input type="hidden" name="_token" value="{{ token }}">
+                                                <button type="submit" class="w-full cursor-pointer rounded-tile px-3 py-2.5 text-left hover:bg-sunken">Retirer du classement</button>
+                                            </form>
+                                        </div>
+                                    </details>
+                                </div>
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                </ol>
             </div>
         {% endif %}
-    </header>
-
-    {% if missing_items is not empty %}
-        <section class="mb-6 flex flex-col gap-3 border p-4" aria-labelledby="missing-title">
-            <h2 id="missing-title">{{ missing_items|length }} élément{{ missing_items|length > 1 ? 's' }} pas encore classé{{ missing_items|length > 1 ? 's' }}</h2>
-            <ul class="text-sm">
-                {% for item in missing_items %}<li>{{ item.name }}</li>{% endfor %}
-            </ul>
-            <div class="flex flex-wrap gap-2">
-                <form method="post" action="{{ path('app_duel_insert_missing', {id: ranking.id}) }}">
-                    <input type="hidden" name="_token" value="{{ token }}">
-                    <button type="submit" class="border px-3 py-1">Placer par duel</button>
-                </form>
-                <form method="post" action="{{ path('app_ranking_append_missing', {id: ranking.id}) }}">
-                    <input type="hidden" name="_token" value="{{ token }}">
-                    <button type="submit" class="border px-3 py-1">Ajouter à la fin</button>
-                </form>
-            </div>
-        </section>
-    {% endif %}
-
-    {% set items = ranking.items %}
-    {% if items is empty %}
-        <p>Ce classement est vide.{% if can_edit and ranking.scope is null %} Ajoute des éléments depuis les pages <a href="{{ path('app_artist_index') }}" class="underline">artistes</a> et albums.{% endif %}</p>
-    {% elseif can_edit %}
-        <p class="mb-3 text-sm" data-sortable-status aria-live="polite">Glisse les éléments, ou utilise les flèches, pour changer l'ordre.</p>
-        <ol class="flex flex-col divide-y"
-            data-controller="sortable"
-            data-sortable-url-value="{{ path('app_ranking_order', {id: ranking.id}) }}"
-            data-sortable-token-value="{{ token }}">
-            {% for item in items %}
-                <li class="flex items-center gap-3 py-2" data-item-id="{{ item.id }}">
-                    <span class="cursor-grab select-none px-1" data-sortable-handle aria-hidden="true">⠿</span>
-                    <span class="w-8 shrink-0 text-right" data-sortable-position>{{ loop.index }}</span>
-                    <div class="flex-1 min-w-0">{{ include('catalog/_item.html.twig', {item: item}) }}</div>
-                    <div class="flex shrink-0 gap-1">
-                        <button type="button" class="border px-2" data-action="sortable#moveUp" aria-label="Monter {{ item.name }}">↑</button>
-                        <button type="button" class="border px-2" data-action="sortable#moveDown" aria-label="Descendre {{ item.name }}">↓</button>
-                        <form method="post" action="{{ path('app_duel_place_item', {id: ranking.id}) }}">
-                            <input type="hidden" name="itemId" value="{{ item.id }}">
-                            <input type="hidden" name="_token" value="{{ token }}">
-                            <button type="submit" class="border px-2" title="Replacer par duel" aria-label="Replacer {{ item.name }} par duel">⇅</button>
-                        </form>
-                        <form method="post" action="{{ path('app_ranking_remove_item', {id: ranking.id}) }}">
-                            <input type="hidden" name="itemId" value="{{ item.id }}">
-                            <input type="hidden" name="_token" value="{{ token }}">
-                            <button type="submit" class="border px-2" aria-label="Retirer {{ item.name }}">×</button>
-                        </form>
-                    </div>
-                </li>
-            {% endfor %}
-        </ol>
-    {% else %}
-        <ol class="flex flex-col divide-y">
-            {% for item in items %}
-                <li class="flex items-center gap-3 py-2">
-                    <span class="w-8 shrink-0 text-right">{{ loop.index }}</span>
-                    <div class="flex-1 min-w-0">{{ include('catalog/_item.html.twig', {item: item}) }}</div>
-                </li>
-            {% endfor %}
-        </ol>
-    {% endif %}
+    </div>
 {% endblock %}

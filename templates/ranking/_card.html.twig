@@ -1,13 +1,24 @@
-{# Carte de classement dans une liste. Variables : ranking, top (premiers éléments) #}
-<article class="flex flex-col gap-2 border p-4">
-    <h3><a href="{{ path('app_ranking_show', {id: ranking.id}) }}">{{ ranking.title }}</a></h3>
-    <p class="text-sm">
-        par <a href="{{ path('app_profile', {username: ranking.owner.username}) }}">{{ ranking.owner.username }}</a>
-        · {{ ranking.entries|length }} éléments
-    </p>
-    {% if top is not empty %}
-        <ol class="list-decimal pl-5 text-sm">
-            {% for item in top %}<li class="truncate">{{ item.name }}</li>{% endfor %}
-        </ol>
-    {% endif %}
+{# Carte de classement dans une liste, façon jaquette. Variables : ranking, top (premiers éléments) #}
+<article class="card relative flex flex-col overflow-hidden">
+    <div class="stripes-row h-1.5" aria-hidden="true"></div>
+    <div class="flex gap-3.5 p-3.5">
+        {{ include('catalog/_cover.html.twig', {item: top|first ?: null, seed: ranking.id, class: 'size-[84px] rounded-tile'}) }}
+        <div class="flex min-w-0 flex-1 flex-col gap-1.5">
+            <h3 class="font-mono text-sm font-medium uppercase tracking-[0.5px]">
+                {# Le lien couvre toute la carte ; celui du pseudo passe au-dessus. #}
+                <a href="{{ path('app_ranking_show', {id: ranking.id}) }}" class="after:absolute after:inset-0">{{ ranking.title }}</a>
+            </h3>
+            {% if top is not empty %}
+                <ol class="flex flex-col gap-px text-[13px]">
+                    {% for item in top %}
+                        <li class="truncate"><span class="font-mono text-ink-muted">{{ '%02d'|format(loop.index) }}</span> {{ item.name }}</li>
+                    {% endfor %}
+                </ol>
+            {% endif %}
+            <p class="text-xs text-ink-muted">
+                par <a href="{{ path('app_profile', {username: ranking.owner.username}) }}" class="relative z-10 underline">{{ ranking.owner.username }}</a>
+                · {{ ranking.entries|length }} éléments
+            </p>
+        </div>
+    </div>
 </article>

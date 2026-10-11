@@ -3,20 +3,22 @@
 {% block title %}Artistes · Ranko{% endblock %}
 
 {% block body %}
-    <h1 class="mb-6 text-2xl">Artistes</h1>
+    <div class="flex flex-col gap-5">
+        <h1 class="text-[30px] font-bold tracking-[-0.6px]">Artistes</h1>
 
-    <form method="get" class="mb-6 flex gap-2">
-        <input type="search" name="q" value="{{ query }}" placeholder="Chercher un artiste" class="flex-1 border px-2 py-1">
-        <button type="submit" class="border px-4 py-1">Chercher</button>
-    </form>
+        <form method="get" class="flex gap-2">
+            <input type="search" name="q" value="{{ query }}" placeholder="Chercher un artiste" aria-label="Chercher un artiste" class="min-w-0 flex-1">
+            <button type="submit" class="btn btn-lg btn-primary">Chercher</button>
+        </form>
 
-    {% if artists is empty %}
-        <p>Aucun artiste{% if query %} pour « {{ query }} »{% endif %}.</p>
-    {% else %}
-        <ul class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {% for artist in artists %}
-                <li class="border p-4">{{ include('catalog/_item.html.twig', {item: artist}) }}</li>
-            {% endfor %}
-        </ul>
-    {% endif %}
+        {% if artists is empty %}
+            <p>Aucun artiste{% if query %} pour « {{ query }} »{% endif %}.</p>
+        {% else %}
+            <ul class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                {% for artist in artists %}
+                    <li class="flex min-h-[62px] items-center rounded-control border-2 border-ink bg-card px-2.5">{{ include('catalog/_item.html.twig', {item: artist}) }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </div>
 {% endblock %}

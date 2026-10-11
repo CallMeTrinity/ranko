@@ -3,44 +3,65 @@
 {% block title %}Comparaison · Ranko{% endblock %}
 
 {% block body %}
-    <nav class="mb-4 text-sm">
-        <a href="{{ path('app_ranking_show', {id: first.id}) }}">{{ first.title }} ({{ first.owner.username }})</a>
-        vs
-        <a href="{{ path('app_ranking_show', {id: second.id}) }}">{{ second.title }} ({{ second.owner.username }})</a>
-    </nav>
+    <div class="mx-auto flex max-w-2xl flex-col gap-5">
+        <nav class="text-[13px] leading-snug text-ink-muted">
+            <a href="{{ path('app_ranking_show', {id: first.id}) }}">{{ first.title }} ({{ first.owner.username }})</a>
+            vs
+            <a href="{{ path('app_ranking_show', {id: second.id}) }}">{{ second.title }} ({{ second.owner.username }})</a>
+        </nav>
 
-    <h1 class="mb-6 text-2xl">{{ first.owner.username }} et {{ second.owner.username }}</h1>
+        <h1 class="grid grid-cols-[1fr_auto_1fr] items-center gap-2.5 font-semibold">
+            <span class="grid h-[52px] place-items-center truncate rounded-control border-2 border-ink bg-stripe-1 px-2 font-mono font-medium">{{ first.owner.username }}</span>
+            <span>et</span>
+            <span class="grid h-[52px] place-items-center truncate rounded-control border-2 border-ink bg-stripe-5 px-2 font-mono font-medium">{{ second.owner.username }}</span>
+        </h1>
 
-    {% if not result.meaningful %}
-        <p>Il faut au moins deux éléments en commun pour comparer ces classements ({{ result.commonIds|length }} en commun).</p>
-    {% else %}
-        <section class="mb-8 flex flex-col gap-2" aria-labelledby="agreement-title">
-            <h2 id="agreement-title" class="text-4xl">{{ (result.agreement * 100)|round }} % d'accord</h2>
-            <p>
-                Sur les {{ result.commonIds|length }} éléments en commun, {{ result.concordant }} paires sur {{ result.pairs }}
-                sont classées dans le même ordre (τ de Kendall = {{ result.tau|number_format(2, ',') }}).
-            </p>
-        </section>
+        {% if not result.meaningful %}
+            <p>Il faut au moins deux éléments en commun pour comparer ces classements ({{ result.commonIds|length }} en commun).</p>
+        {% else %}
+            {% set percent = (result.agreement * 100)|round %}
+            <section class="card flex flex-col items-center gap-3.5 p-[18px]" aria-labelledby="agreement-title">
+                <h2 id="agreement-title" class="flex flex-col items-center gap-3.5">
+                    <span class="sr-only">{{ percent }} % d'accord</span>
+                    <span class="flex items-center gap-1.5 font-mono font-medium" aria-hidden="true">
+                        {% for digit in percent|split('') %}
+                            <span class="counter-digit h-[78px] w-[58px] rounded-cover text-[52px]">{{ digit }}</span>
+                        {% endfor %}
+                        <span class="pl-1.5 text-[40px]">%</span>
+                    </span>
+                    <span class="text-lg font-bold" aria-hidden="true">d'accord</span>
+                </h2>
+                <p class="text-center text-sm leading-normal text-pretty">
+                    Sur les {{ result.commonIds|length }} éléments en commun, {{ result.concordant }} paires sur {{ result.pairs }}
+                    sont classées dans le même ordre (τ de Kendall = {{ result.tau|number_format(2, ',') }}).
+                </p>
+            </section>
 
-        <table class="w-full">
-            <thead>
-                <tr>
-                    <th scope="col" class="text-left">Élément</th>
-                    <th scope="col" class="text-right">{{ first.owner.username }}</th>
-                    <th scope="col" class="text-right">{{ second.owner.username }}</th>
-                    <th scope="col" class="text-right">Écart</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for row in rows %}
-                    <tr class="border-t">
-                        <td class="py-2">{{ row.item.name }}</td>
-                        <td class="text-right">{{ row.first }}</td>
-                        <td class="text-right">{{ row.second }}</td>
-                        <td class="text-right">{{ row.second - row.first > 0 ? '+' }}{{ row.second - row.first }}</td>
+            <table class="w-full table-fixed text-sm">
+                <thead class="font-mono text-xs text-ink-muted">
+                    <tr class="border-b-2 border-ink">
+                        <th scope="col" class="pb-2 text-left font-normal">Élément</th>
+                        <th scope="col" class="w-[72px] truncate pb-2 text-right font-normal">{{ first.owner.username }}</th>
+                        <th scope="col" class="w-[72px] truncate pb-2 text-right font-normal">{{ second.owner.username }}</th>
+                        <th scope="col" class="w-[56px] pb-2 text-right font-normal">Écart</th>
                     </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    {% endif %}
+                </thead>
+                <tbody>
+                    {% for row in rows %}
+                        {% set delta = row.second - row.first %}
+                        <tr class="h-12 border-b border-rule">
+                            <td class="truncate font-semibold">{{ row.item.name }}</td>
+                            <td class="text-right font-mono">{{ row.first }}</td>
+                            <td class="text-right font-mono">{{ row.second }}</td>
+                            <td class="text-right">
+                                <span class="{{ delta == 0 ? 'bg-stripe-4' : (delta in [-1, 1] ? 'bg-stripe-3' : 'bg-stripe-1') }} inline-block min-w-9 rounded-tile px-1.5 py-0.5 text-center font-mono text-[13px]">
+                                    {{- delta > 0 ? '+' ~ delta : (delta < 0 ? '−' ~ (-delta) : '0') -}}
+                                </span>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+    </div>
 {% endblock %}

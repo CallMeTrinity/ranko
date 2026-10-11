@@ -47,7 +47,7 @@ export default class extends Controller {
     async save() {
         const items = [...this.element.querySelectorAll(':scope > [data-item-id]')];
         items.forEach((item, index) => {
-            item.querySelector('[data-sortable-position]').textContent = index + 1;
+            item.querySelector('[data-sortable-position]').textContent = String(index + 1).padStart(2, '0');
         });
 
         this.setStatus('Enregistrement…');

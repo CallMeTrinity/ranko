@@ -1,20 +1,21 @@
-{# Un des deux choix du duel. Variables : ranking, left, right, choice, side, token #}
+{# Une des deux faces du duel. Variables : ranking, left, right, choice, side, token #}
 {% set kind = choice.kind.value %}
-{% set cover = kind == 'album' ? choice.coverUrl : (kind == 'track' ? choice.album.coverUrl : null) %}
+{% set face = side == 'left' ? {label: 'FACE A', color: 'bg-stripe-1'} : {label: 'FACE B', color: 'bg-stripe-5'} %}
 <form method="post" action="{{ path('app_duel_answer', {id: ranking.id}) }}" class="flex">
     <input type="hidden" name="leftId" value="{{ left.id }}">
     <input type="hidden" name="rightId" value="{{ right.id }}">
     <input type="hidden" name="winnerId" value="{{ choice.id }}">
     <input type="hidden" name="_token" value="{{ token }}">
-    <button type="submit" class="flex w-full flex-col items-center gap-3 border p-4" data-duel-target="{{ side }}">
-        {% if cover %}
-            <img src="{{ cover }}" alt="" class="aspect-square w-full max-w-60 object-cover">
-        {% endif %}
-        <span class="text-xl">{{ choice.name }}</span>
-        <span class="text-sm">
-            {%- if kind == 'album' %}{{ choice.artist.name }}{% if choice.releaseYear %} · {{ choice.releaseYear }}{% endif %}
-            {%- elseif kind == 'track' %}{{ choice.album.name }} · {{ choice.album.artist.name }}
-            {%- else %}{{ choice.disambiguation }}{% endif -%}
+    <button type="submit" class="card flex w-full cursor-pointer flex-col overflow-hidden text-left" data-duel-target="{{ side }}">
+        <span class="{{ face.color }} flex h-[38px] w-full items-center px-3 font-mono text-[15px] font-medium">{{ face.label }}</span>
+        {{ include('catalog/_cover.html.twig', {item: choice, class: 'aspect-square w-full border-y-2 border-ink'}) }}
+        <span class="flex min-h-[86px] w-full flex-col gap-0.5 p-3">
+            <span class="text-lg leading-tight font-bold" data-duel-name>{{ choice.name }}</span>
+            <span class="font-mono text-[13px] text-ink-muted">
+                {%- if kind == 'album' %}{{ choice.artist.name }}{% if choice.releaseYear %} · {{ choice.releaseYear }}{% endif %}
+                {%- elseif kind == 'track' %}{{ choice.album.name }} · {{ choice.album.artist.name }}
+                {%- else %}{{ choice.disambiguation }}{% endif -%}
+            </span>
         </span>
     </button>
 </form>

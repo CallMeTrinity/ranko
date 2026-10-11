@@ -121,7 +121,7 @@ final class DuelControllerTest extends WebTestCase
      */
     private function answerLikeTheUser(Crawler $crawler): ?Crawler
     {
-        $names = $crawler->filter('[data-duel-target] .text-xl')->each(static fn (Crawler $node): string => trim($node->text()));
+        $names = $crawler->filter('[data-duel-name]')->each(static fn (Crawler $node): string => trim($node->text()));
         $winner = array_search($names[0], self::TASTE, true) < array_search($names[1], self::TASTE, true) ? 0 : 1;
 
         $this->client->submit($crawler->filter('form[action$="/duel/answer"]')->eq($winner)->form());
