@@ -31,6 +31,10 @@ export default class extends Controller {
         if (event.repeat || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) {
             return;
         }
+        // Liste des titres ouverte : les flèches ne doivent pas répondre à sa place.
+        if (document.querySelector(':popover-open')) {
+            return;
+        }
         const target = { ArrowLeft: this.leftTarget, ArrowRight: this.rightTarget }[event.key];
         if (target && !target.disabled) {
             event.preventDefault();

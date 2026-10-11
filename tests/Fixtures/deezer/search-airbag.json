@@ -1,0 +1,47 @@
+{
+    "data": [
+        {
+            "id": 138539971,
+            "title": "Airbag",
+            "title_short": "Airbag",
+            "preview": "https://cdnt-preview.dzcdn.net/api/1/1/fixture/138539971.mp3?hdnea=exp=0",
+            "artist": {
+                "id": 399,
+                "name": "Radiohead"
+            },
+            "album": {
+                "id": 14879699,
+                "title": "OK Computer"
+            }
+        },
+        {
+            "id": 12028922,
+            "title": "Airbag",
+            "title_short": "Airbag",
+            "preview": "https://cdnt-preview.dzcdn.net/api/1/1/fixture/12028922.mp3?hdnea=exp=0",
+            "artist": {
+                "id": 275309,
+                "name": "Vitamin String Quartet"
+            },
+            "album": {
+                "id": 1103308,
+                "title": "Strung Out On OK Computer: VSQ Performs Radiohead"
+            }
+        },
+        {
+            "id": 1883893017,
+            "title": "Airbag",
+            "title_short": "Airbag",
+            "preview": "https://cdnt-preview.dzcdn.net/api/1/1/fixture/1883893017.mp3?hdnea=exp=0",
+            "artist": {
+                "id": 498395,
+                "name": "Mother Falcon"
+            },
+            "album": {
+                "id": 350287377,
+                "title": "MF Computer (Radiohead's OK Computer Reimagined)"
+            }
+        }
+    ],
+    "total": 3
+}

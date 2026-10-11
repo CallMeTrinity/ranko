@@ -1,0 +1,17 @@
+{# Contenu de la turbo-frame ouverte par _tracklist_button.html.twig. Variables : album, tracks #}
+<turbo-frame id="tracklist-{{ album.id }}">
+    {% if tracks is empty %}
+        <p class="p-4 text-sm text-ink-muted">Titres pas encore importés.</p>
+    {% else %}
+        <ol class="flex flex-col px-3">
+            {% for track in tracks %}
+                <li class="flex min-h-14 items-center gap-3 border-b border-rule py-1.5 last:border-b-0">
+                    <span class="w-7 shrink-0 text-right font-mono text-sm text-ink-muted">{{ '%02d'|format(track.position) }}</span>
+                    <span class="min-w-0 flex-1 truncate font-semibold">{{ track.name }}</span>
+                    <span class="shrink-0 font-mono text-sm text-ink-muted">{{ track.formattedDuration }}</span>
+                    {{ include('catalog/_preview_button.html.twig') }}
+                </li>
+            {% endfor %}
+        </ol>
+    {% endif %}
+</turbo-frame>

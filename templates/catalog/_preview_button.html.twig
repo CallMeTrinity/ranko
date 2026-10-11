@@ -1,0 +1,6 @@
+{# Lecture d'un extrait de 30 s (voir preview_controller.js). Variables : track, class (optionnel) #}
+<button type="button" class="btn-icon disabled:cursor-default disabled:opacity-50 {{ class ?? '' }}"
+        data-controller="preview" data-action="preview#toggle"
+        data-preview-url-value="{{ path('app_track_preview', {id: track.id}) }}"
+        data-preview-name-value="{{ track.name }}"
+        aria-label="Écouter un extrait de {{ track.name }}">▶</button>

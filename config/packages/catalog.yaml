@@ -28,6 +28,15 @@ framework:
                 headers:
                     User-Agent: '%env(MUSICBRAINZ_USER_AGENT)%'
                     Accept: 'application/json'
+            # Extraits audio (App\Catalog\Deezer\DeezerPreviewFinder). API publique, sans clé ;
+            # quota de 50 requêtes par 5 secondes et par IP, loin de ce qu'on consomme.
+            deezer.client:
+                base_uri: 'https://api.deezer.com/'
+                headers:
+                    Accept: 'application/json'
+                # Appelé pendant une requête web, au clic sur lecture : mieux vaut pas
+                # d'extrait qu'un bouton qui mouline.
+                timeout: 5
 
 when@test:
     framework:

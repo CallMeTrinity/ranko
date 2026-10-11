@@ -68,6 +68,34 @@ final class DuelControllerTest extends WebTestCase
         self::assertSelectorTextContains('main', 'Question 2', 'La réponse rejouée a été ignorée');
     }
 
+    public function testTrackDuelFacesOfferAPreview(): void
+    {
+        $ranking = $this->ranking(['Airbag', 'Paranoid Android']);
+        $this->client->request('GET', '/rankings/'.$ranking->getId());
+        $this->client->submitForm('Classer par duel');
+        $this->client->followRedirect();
+
+        self::assertSelectorCount(2, '[data-controller="preview"]');
+        self::assertSelectorCount(0, '[data-duel-target] [data-controller="preview"]', 'Pas de bouton dans le bouton de réponse');
+    }
+
+    public function testAlbumDuelFacesOfferTheTracklist(): void
+    {
+        $owner = self::createUser();
+        $artist = self::createArtist('Portishead');
+        $dummy = self::createAlbum($artist, 'Dummy', ['Mysterons']);
+        self::createAlbum($artist, 'Third', ['Silence']);
+        $albums = self::getContainer()->get(RankingManager::class)->findOrCreate($owner, CatalogItemKind::Album, $artist);
+        $this->client->loginUser($owner);
+
+        $this->client->request('GET', '/rankings/'.$albums->getId());
+        $this->client->submitForm('Classer par duel');
+        $this->client->followRedirect();
+
+        self::assertSelectorCount(2, 'button[popovertarget]:not([popovertargetaction])');
+        self::assertSelectorExists(sprintf('[popover] turbo-frame[src="/albums/%d/tracklist"]', $dummy->getId()));
+    }
+
     public function testUndoLastAnswer(): void
     {
         $ranking = $this->ranking(['Airbag', 'Paranoid Android', 'Let Down']);

@@ -36,6 +36,7 @@
                         <span class="w-7 shrink-0 text-right font-mono text-sm text-ink-muted">{{ '%02d'|format(track.position) }}</span>
                         <span class="flex-1 truncate font-semibold">{{ track.name }}</span>
                         <span class="shrink-0 font-mono text-sm text-ink-muted">{{ track.formattedDuration }}</span>
+                        {{ include('catalog/_preview_button.html.twig', {class: ''}) }}
                         {{ include('ranking/_add_button.html.twig', {item: track, label: '+ Top titres'}) }}
                     </li>
                 {% endfor %}

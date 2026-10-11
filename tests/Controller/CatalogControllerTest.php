@@ -2,6 +2,7 @@
 
 namespace App\Tests\Controller;
 
+use App\Tests\Fixtures\CatalogHttpMock;
 use App\Tests\Support\CreatesEntities;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
@@ -40,5 +41,47 @@ final class CatalogControllerTest extends WebTestCase
 
         $client->request('GET', '/albums/'.$albumOfHiddenArtist->getId());
         self::assertResponseStatusCodeSame(404);
+    }
+
+    public function testPreviewRedirectsToTheDeezerExcerpt(): void
+    {
+        $client = self::createClient();
+        $album = self::createAlbum(self::createArtist(), 'OK Computer', ['Airbag', 'Titre absent de Deezer']);
+        [$airbag, $missing] = $album->getTracks()->toArray();
+
+        $client->request('GET', '/albums/'.$album->getId());
+        self::assertSelectorExists(sprintf('[data-preview-url-value="/tracks/%d/preview"]', $airbag->getId()));
+
+        $client->request('GET', '/tracks/'.$airbag->getId().'/preview');
+        self::assertResponseRedirects('https://cdnt-preview.dzcdn.net/api/1/1/fixture/'.CatalogHttpMock::DEEZER_AIRBAG.'.mp3?hdnea=exp=0');
+
+        $client->request('GET', '/tracks/'.$missing->getId().'/preview');
+        self::assertResponseStatusCodeSame(404);
+    }
+
+    public function testNoPreviewForHiddenTracks(): void
+    {
+        $client = self::createClient();
+        $album = self::createAlbum(self::createArtist(), 'OK Computer', ['Airbag'], hidden: true);
+
+        $client->request('GET', '/tracks/'.$album->getTracks()->first()->getId().'/preview');
+        self::assertResponseStatusCodeSame(404);
+    }
+
+    public function testTracklistFrame(): void
+    {
+        $client = self::createClient();
+        $artist = self::createArtist();
+        $album = self::createAlbum($artist, 'OK Computer', ['Airbag', 'Paranoid Android']);
+        $notImported = self::createAlbum($artist, 'Kid A');
+
+        $client->request('GET', '/albums/'.$album->getId().'/tracklist');
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('turbo-frame#tracklist-'.$album->getId());
+        self::assertSelectorTextContains('ol', 'Paranoid Android');
+        self::assertSelectorCount(2, '[data-controller="preview"]');
+
+        $client->request('GET', '/albums/'.$notImported->getId().'/tracklist');
+        self::assertSelectorTextContains('turbo-frame', 'Titres pas encore importés');
     }
 }

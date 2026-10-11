@@ -2,8 +2,10 @@
 
 namespace App\Controller;
 
+use App\Catalog\Deezer\DeezerPreviewFinder;
 use App\Entity\Album;
 use App\Entity\Artist;
+use App\Entity\Track;
 use App\Enum\CatalogItemKind;
 use App\Repository\ArtistRepository;
 use App\Repository\CatalogItemRepository;
@@ -55,5 +57,38 @@ final class CatalogController extends AbstractController
             'tracks' => $this->catalog->findRankable(CatalogItemKind::Track, $album),
             'community_rankings' => $rankings->findPublicByScope($album),
         ]);
+    }
+
+    /**
+     * Liste des titres chargée à la demande (turbo-frame) quand on veut se rafraîchir la
+     * mémoire sur un album pendant un classement ou un duel.
+     */
+    #[Route('/albums/{id<\d+>}/tracklist', name: 'app_album_tracklist', methods: ['GET'])]
+    public function tracklist(Album $album): Response
+    {
+        if (!$album->isVisible()) {
+            throw $this->createNotFoundException();
+        }
+
+        return $this->render('catalog/_tracklist.html.twig', [
+            'album' => $album,
+            'tracks' => $this->catalog->findRankable(CatalogItemKind::Track, $album),
+        ]);
+    }
+
+    /**
+     * Redirige vers l'extrait de 30 s du titre : c'est la source d'un élément <audio>.
+     * L'URL de destination expire vite, la redirection ne doit donc pas être mise en cache.
+     */
+    #[Route('/tracks/{id<\d+>}/preview', name: 'app_track_preview', methods: ['GET'])]
+    public function preview(Track $track, DeezerPreviewFinder $previews): Response
+    {
+        if (!$track->isVisible()) {
+            throw $this->createNotFoundException();
+        }
+
+        $url = $previews->findPreviewUrl($track) ?? throw $this->createNotFoundException('Pas d\'extrait pour ce titre.');
+
+        return $this->redirect($url);
     }
 }

@@ -1,0 +1,22 @@
+{# Bouton qui ouvre la liste des titres d'un album par-dessus la page, chargée au premier affichage.
+   Variables : album, label (optionnel : bouton texte plutôt qu'icône), class (optionnel)
+   Le popover natif gère la fermeture (Échap, clic à côté) et la couche d'affichage ; la
+   turbo-frame lazy ne charge qu'une fois le popover visible. #}
+{% set popover_id = 'tracklist-popover-' ~ album.id %}
+<button type="button" popovertarget="{{ popover_id }}"
+        class="{{ label is defined ? 'btn' : 'btn-icon' }} {{ class ?? '' }}"
+        title="Voir les titres" aria-label="Voir les titres de {{ album.name }}">{{ label ?? '≡' }}</button>
+<div id="{{ popover_id }}" popover
+     class="card m-auto max-h-[80vh] w-[min(32rem,calc(100vw-2rem))] overflow-y-auto text-ink backdrop:bg-ink/40">
+    <div class="sticky top-0 z-10 flex items-center gap-3 border-b-2 border-ink bg-card p-3">
+        {{ include('catalog/_cover.html.twig', {item: album, class: 'size-12 rounded-tile', sizes: '48px'}) }}
+        <div class="min-w-0 flex-1">
+            <p class="truncate font-bold">{{ album.name }}</p>
+            <p class="truncate font-mono text-xs text-ink-muted">{{ album.artist.name }}{% if album.releaseYear %} · {{ album.releaseYear }}{% endif %}</p>
+        </div>
+        <button type="button" popovertarget="{{ popover_id }}" popovertargetaction="hide" class="btn-icon" aria-label="Fermer">✕</button>
+    </div>
+    <turbo-frame id="tracklist-{{ album.id }}" src="{{ path('app_album_tracklist', {id: album.id}) }}" loading="lazy">
+        <p class="p-4 text-sm text-ink-muted">Chargement…</p>
+    </turbo-frame>
+</div>

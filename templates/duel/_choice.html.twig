@@ -1,21 +1,30 @@
 {# Une des deux faces du duel. Variables : ranking, left, right, choice, side, token #}
 {% set kind = choice.kind.value %}
 {% set face = side == 'left' ? {label: 'FACE A', color: 'bg-stripe-1'} : {label: 'FACE B', color: 'bg-stripe-5'} %}
-<form method="post" action="{{ path('app_duel_answer', {id: ranking.id}) }}" class="flex">
-    <input type="hidden" name="leftId" value="{{ left.id }}">
-    <input type="hidden" name="rightId" value="{{ right.id }}">
-    <input type="hidden" name="winnerId" value="{{ choice.id }}">
-    <input type="hidden" name="_token" value="{{ token }}">
-    <button type="submit" class="card flex w-full cursor-pointer flex-col overflow-hidden text-left" data-duel-target="{{ side }}">
-        <span class="{{ face.color }} flex h-[38px] w-full items-center px-3 font-mono text-[15px] font-medium">{{ face.label }}</span>
-        {{ include('catalog/_cover.html.twig', {item: choice, class: 'aspect-square w-full border-y-2 border-ink', sizes: '(min-width: 1024px) 490px, 50vw'}) }}
-        <span class="flex min-h-[86px] w-full flex-col gap-0.5 p-3">
-            <span class="text-lg leading-tight font-bold" data-duel-name>{{ choice.name }}</span>
-            <span class="font-mono text-[13px] text-ink-muted">
-                {%- if kind == 'album' %}{{ choice.artist.name }}{% if choice.releaseYear %} · {{ choice.releaseYear }}{% endif %}
-                {%- elseif kind == 'track' %}{{ choice.album.name }} · {{ choice.album.artist.name }}
-                {%- else %}{{ choice.disambiguation }}{% endif -%}
+<div class="relative flex">
+    <form method="post" action="{{ path('app_duel_answer', {id: ranking.id}) }}" class="flex w-full">
+        <input type="hidden" name="leftId" value="{{ left.id }}">
+        <input type="hidden" name="rightId" value="{{ right.id }}">
+        <input type="hidden" name="winnerId" value="{{ choice.id }}">
+        <input type="hidden" name="_token" value="{{ token }}">
+        <button type="submit" class="card flex w-full cursor-pointer flex-col overflow-hidden text-left" data-duel-target="{{ side }}">
+            <span class="{{ face.color }} flex h-[38px] w-full items-center px-3 font-mono text-[15px] font-medium">{{ face.label }}</span>
+            {{ include('catalog/_cover.html.twig', {item: choice, class: 'aspect-square w-full border-y-2 border-ink', sizes: '(min-width: 1024px) 490px, 50vw'}) }}
+            <span class="flex min-h-[86px] w-full flex-col gap-0.5 p-3">
+                <span class="text-lg leading-tight font-bold" data-duel-name>{{ choice.name }}</span>
+                <span class="font-mono text-[13px] text-ink-muted">
+                    {%- if kind == 'album' %}{{ choice.artist.name }}{% if choice.releaseYear %} · {{ choice.releaseYear }}{% endif %}
+                    {%- elseif kind == 'track' %}{{ choice.album.name }} · {{ choice.album.artist.name }}
+                    {%- else %}{{ choice.disambiguation }}{% endif -%}
+                </span>
             </span>
-        </span>
-    </button>
-</form>
+        </button>
+    </form>
+    {# Hors du bouton de réponse (un bouton ne peut pas en contenir un autre), posé sur la pochette :
+       2px de bordure + 38px de bandeau + 2px de bordure, plus la marge. #}
+    {% if kind == 'track' %}
+        {{ include('catalog/_preview_button.html.twig', {track: choice, class: 'absolute top-[50px] right-[10px] border-2 border-ink'}) }}
+    {% elseif kind == 'album' %}
+        {{ include('catalog/_tracklist_button.html.twig', {album: choice, label: 'Titres', class: 'absolute top-[50px] right-[10px] bg-card'}) }}
+    {% endif %}
+</div>

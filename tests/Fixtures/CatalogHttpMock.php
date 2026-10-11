@@ -6,7 +6,7 @@ use Symfony\Component\HttpClient\Response\MockResponse;
 
 /**
  * Remplace le transport HTTP en environnement de test (framework.http_client.mock_response_factory).
- * Les fixtures sont de vraies réponses MusicBrainz et Cover Art Archive, réduites.
+ * Les fixtures sont de vraies réponses MusicBrainz, Cover Art Archive et Deezer, réduites.
  */
 final class CatalogHttpMock
 {
@@ -20,6 +20,9 @@ final class CatalogHttpMock
     /** Album dont la pochette répond 500, comme un miroir archive.org en panne. */
     public const string BROKEN_COVER = '00000000-0000-0000-0000-000000000500';
 
+    /** Titre Deezer qui correspond à "Airbag" de Radiohead dans deezer/search-airbag.json. */
+    public const string DEEZER_AIRBAG = '138539971';
+
     private const array ROUTES = [
         'musicbrainz.org/ws/2/artist?' => 'artist-search.json',
         'musicbrainz.org/ws/2/artist/'.self::RADIOHEAD => 'artist.json',
@@ -27,6 +30,8 @@ final class CatalogHttpMock
         'musicbrainz.org/ws/2/release-group/'.self::OK_COMPUTER => 'release-group-ok-computer.json',
         'musicbrainz.org/ws/2/release/'.self::OK_COMPUTER_FIRST_RELEASE => 'release-ok-computer.json',
         'coverartarchive.org/release-group/'.self::OK_COMPUTER => 'cover-ok-computer.json',
+        'api.deezer.com/search?' => '../deezer/search-airbag.json',
+        'api.deezer.com/track/'.self::DEEZER_AIRBAG => '../deezer/track-airbag.json',
     ];
 
     public function __invoke(string $method, string $url): MockResponse
