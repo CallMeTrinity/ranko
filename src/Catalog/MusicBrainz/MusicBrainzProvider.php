@@ -15,6 +15,8 @@ use Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface as HttpClientExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
+use function Symfony\Component\String\u;
+
 /**
  * API MusicBrainz (https://musicbrainz.org/doc/MusicBrainz_API).
  *
@@ -62,7 +64,8 @@ final class MusicBrainzProvider implements CatalogProviderInterface
         do {
             $page = $this->get('release-group', [
                 'artist' => $artistExternalId,
-                'type' => 'album|ep',
+                // Les singles portent les faces B. Ils arrivent masqués (AlbumData::isMainRelease()).
+                'type' => 'album|ep|single',
                 // Sorties officielles seulement : exclut les centaines de bootlegs.
                 'release-group-status' => 'website-default',
                 'limit' => self::PAGE_SIZE,
@@ -87,9 +90,17 @@ final class MusicBrainzProvider implements CatalogProviderInterface
 
     public function fetchTracklist(string $albumExternalId, ?string $editionId = null): Tracklist
     {
-        $editionId ??= $this->pickEdition($albumExternalId);
         if (null === $editionId) {
-            return new Tracklist(null, []);
+            $group = $this->get('release-group/'.$albumExternalId, ['inc' => 'releases'], 'release-group');
+
+            if ('Single' === ($group['primary-type'] ?? null)) {
+                return $this->mergeEditions($albumExternalId);
+            }
+
+            $editionId = $this->pickEdition($group['releases'] ?? []);
+            if (null === $editionId) {
+                return new Tracklist(null, []);
+            }
         }
 
         $release = $this->get('release/'.$editionId, ['inc' => 'recordings'], 'release');
@@ -134,19 +145,85 @@ final class MusicBrainzProvider implements CatalogProviderInterface
 
     /**
      * Plus ancienne édition officielle : c'est en général la tracklist d'origine.
-     * Une édition sans date passe après toutes les éditions datées.
+     *
+     * @param list<array<string, mixed>> $releases
      */
-    private function pickEdition(string $albumExternalId): ?string
+    private function pickEdition(array $releases): ?string
     {
-        $group = $this->get('release-group/'.$albumExternalId, ['inc' => 'releases'], 'release-group');
-        $releases = $group['releases'] ?? [];
+        return $this->officialByDate($releases)[0]['id'] ?? null;
+    }
 
+    /**
+     * Les faces B d'un single sont réparties entre ses éditions (CD1, CD2, pressages
+     * étrangers) : on garde chaque titre de chacune, une seule fois. Un titre est un doublon
+     * s'il reprend un enregistrement déjà vu, ou un titre déjà vu au nom près ("Can’t"/"Can't",
+     * enregistrements en double chez MusicBrainz). Les versions live ou instrumentales passent
+     * donc : c'est au back-office de les masquer.
+     *
+     * Pas d'édition renvoyée : chaque titre garde l'id de sa première apparition, et les
+     * éditions sont parcourues dans un ordre fixe pour que les réimports retombent dessus.
+     */
+    private function mergeEditions(string $albumExternalId): Tracklist
+    {
+        $releases = [];
+        $offset = 0;
+
+        do {
+            $page = $this->get('release', [
+                'release-group' => $albumExternalId,
+                'inc' => 'recordings',
+                'limit' => self::PAGE_SIZE,
+                'offset' => $offset,
+            ], 'release-group', $albumExternalId);
+
+            array_push($releases, ...$page['releases'] ?? []);
+            $offset += self::PAGE_SIZE;
+        } while ($offset < ($page['release-count'] ?? 0));
+
+        $tracks = [];
+        $seen = [];
+
+        foreach ($this->officialByDate($releases) as $release) {
+            foreach ($release['media'] ?? [] as $medium) {
+                foreach ($medium['tracks'] ?? [] as $track) {
+                    $title = u($track['title'])->ascii()->lower()->replaceMatches('/[^a-z0-9]+/', '')->toString();
+                    $keys = array_filter(['recording:'.($track['recording']['id'] ?? $track['id']), '' !== $title ? 'title:'.$title : null]);
+                    if ([] !== array_intersect_key($seen, array_flip($keys))) {
+                        continue;
+                    }
+                    $seen += array_fill_keys($keys, true);
+
+                    $tracks[] = new TrackData(
+                        externalId: $track['id'],
+                        title: $track['title'],
+                        discNumber: 1,
+                        position: \count($tracks) + 1,
+                        durationMs: $track['length'] ?? $track['recording']['length'] ?? null,
+                    );
+                }
+            }
+        }
+
+        return new Tracklist(null, $tracks);
+    }
+
+    /**
+     * Éditions officielles (toutes si aucune ne l'est), de la plus ancienne à la plus
+     * récente. Une édition sans date passe après toutes les éditions datées ; à date égale,
+     * l'id départage pour que l'ordre ne dépende pas de la réponse de l'API.
+     *
+     * @param list<array<string, mixed>> $releases
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function officialByDate(array $releases): array
+    {
         $official = array_filter($releases, static fn (array $release): bool => 'Official' === ($release['status'] ?? null));
-        $candidates = [] !== $official ? $official : $releases;
+        $candidates = [] !== $official ? array_values($official) : $releases;
 
-        usort($candidates, static fn (array $a, array $b): int => (($a['date'] ?? '') ?: '9999') <=> (($b['date'] ?? '') ?: '9999'));
+        usort($candidates, static fn (array $a, array $b): int => [($a['date'] ?? '') ?: '9999', $a['id']] <=> [($b['date'] ?? '') ?: '9999', $b['id']]);
 
-        return $candidates[0]['id'] ?? null;
+        return $candidates;
     }
 
     /**

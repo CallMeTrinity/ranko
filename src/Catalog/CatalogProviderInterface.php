@@ -29,7 +29,7 @@ interface CatalogProviderInterface
     public function fetchArtist(string $externalId): ArtistData;
 
     /**
-     * Albums et EP officiels de l'artiste, y compris lives et compilations.
+     * Albums, EP et singles officiels de l'artiste, y compris lives et compilations.
      *
      * @return list<AlbumData>
      *
@@ -40,6 +40,8 @@ interface CatalogProviderInterface
     /**
      * Liste des titres d'une édition de l'album. Sans édition imposée, le provider
      * choisit la plus représentative ; la réutiliser ensuite garde des ids de titres stables.
+     * Pour un single, il peut fusionner toutes ses éditions (Tracklist::$editionId null) :
+     * c'est là que sont les faces B.
      *
      * @throws ItemNotFoundException
      */

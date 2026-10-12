@@ -1,0 +1,384 @@
+{
+  "release-count": 6,
+  "release-offset": 0,
+  "releases": [
+    {
+      "id": "53bad957-823e-4a99-83a0-c6edbc9b390d",
+      "title": "Dead Star / In Your World",
+      "status": "Official",
+      "date": "2003-03-10",
+      "country": "JP",
+      "media": [
+        {
+          "position": 1,
+          "format": "CD",
+          "tracks": [
+            {
+              "id": "8bbdc707-78c9-34e2-8e72-a711755d8d9b",
+              "position": 1,
+              "number": "1",
+              "title": "Dead Star",
+              "length": 222600,
+              "recording": {
+                "id": "1bd9d164-ff22-407d-b68d-892e79fa6b85",
+                "title": "Dead Star",
+                "length": 222600
+              }
+            },
+            {
+              "id": "b3b1aba3-7e08-3f38-a504-6108d2806800",
+              "position": 2,
+              "number": "2",
+              "title": "In Your World",
+              "length": 157093,
+              "recording": {
+                "id": "b609c761-8d03-45f0-9365-11cc74b4cb90",
+                "title": "In Your World",
+                "length": 157000
+              }
+            },
+            {
+              "id": "a1b7f083-d7fc-3369-af08-69e3d0dab408",
+              "position": 3,
+              "number": "3",
+              "title": "Can’t Take My Eyes Off You",
+              "length": 213040,
+              "recording": {
+                "id": "9a915ef3-7151-495c-a329-f709fccbcdfb",
+                "title": "Can’t Take My Eyes Off You",
+                "length": 211226
+              }
+            },
+            {
+              "id": "3ca49d87-c637-31b6-8a00-837a75636980",
+              "position": 4,
+              "number": "4",
+              "title": "In Your World (live)",
+              "length": 192826,
+              "recording": {
+                "id": "77b3c712-12a5-4ae9-b452-a30ca2c6668c",
+                "title": "In Your World (live)",
+                "length": 192826
+              }
+            },
+            {
+              "id": "ea3f799b-b163-3e2d-a0c6-982350ed468c",
+              "position": 5,
+              "number": "5",
+              "title": "Dead Star (live)",
+              "length": 250800,
+              "recording": {
+                "id": "556e47df-b508-4b46-a14b-f60b162a0244",
+                "title": "Dead Star (live)",
+                "length": 250000
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "7428e591-105e-4cea-8a46-fcfcaeae3b7a",
+      "title": "In Your World / Dead Star",
+      "status": "Official",
+      "date": "2002-06-20",
+      "country": "BE",
+      "media": [
+        {
+          "position": 1,
+          "format": "CD",
+          "tracks": [
+            {
+              "id": "82ba5499-677b-36d3-ab75-fb50a6890772",
+              "position": 1,
+              "number": "1",
+              "title": "In Your World",
+              "length": 157200,
+              "recording": {
+                "id": "b609c761-8d03-45f0-9365-11cc74b4cb90",
+                "title": "In Your World",
+                "length": 157000
+              }
+            },
+            {
+              "id": "832fd617-f165-316a-a958-c886e8fdf5a0",
+              "position": 2,
+              "number": "2",
+              "title": "Dead Star",
+              "length": 222093,
+              "recording": {
+                "id": "799b6aa0-890e-4d4a-aba2-20afd41aec66",
+                "title": "Dead Star",
+                "length": 221933
+              }
+            },
+            {
+              "id": "61139944-c9f6-34f5-8a2b-aaa6842bd25e",
+              "position": 3,
+              "number": "3",
+              "title": "Futurism",
+              "length": 207800,
+              "recording": {
+                "id": "92d95234-1b2a-4920-a201-d5157fcd6a5e",
+                "title": "Futurism",
+                "length": 207491
+              }
+            },
+            {
+              "id": "ee49f93b-d581-3e5c-a484-7803e17b4f37",
+              "position": 4,
+              "number": "4",
+              "title": "Can't Take My Eyes Off You",
+              "length": 213000,
+              "recording": {
+                "id": "9a915ef3-7151-495c-a329-f709fccbcdfb",
+                "title": "Can’t Take My Eyes Off You",
+                "length": 211226
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "89fbc35b-cfd3-4add-9ed8-ea03cf2cac7a",
+      "title": "Dead Star / In Your World",
+      "status": "Official",
+      "date": "2002-06-17",
+      "country": "GB",
+      "media": [
+        {
+          "position": 1,
+          "format": "CD",
+          "tracks": [
+            {
+              "id": "4d6cd0b1-8756-3aa1-b57d-bd133d4877ee",
+              "position": 1,
+              "number": "1",
+              "title": "Dead Star",
+              "length": 222413,
+              "recording": {
+                "id": "799b6aa0-890e-4d4a-aba2-20afd41aec66",
+                "title": "Dead Star",
+                "length": 221933
+              }
+            },
+            {
+              "id": "43ba886c-2833-3c07-8057-12b0d7822ef2",
+              "position": 2,
+              "number": "2",
+              "title": "In Your World",
+              "length": 157080,
+              "recording": {
+                "id": "b609c761-8d03-45f0-9365-11cc74b4cb90",
+                "title": "In Your World",
+                "length": 157000
+              }
+            },
+            {
+              "id": "deb3b491-e1cb-39bf-ba57-df30dc8b6850",
+              "position": 3,
+              "number": "3",
+              "title": "Futurism",
+              "length": 209733,
+              "recording": {
+                "id": "92d95234-1b2a-4920-a201-d5157fcd6a5e",
+                "title": "Futurism",
+                "length": 207491
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "a41286e5-e32b-4d29-bc4a-b08b567b2eb0",
+      "title": "In Your World / Dead Star",
+      "status": "Official",
+      "date": "2002-06-17",
+      "country": "GB",
+      "media": [
+        {
+          "position": 1,
+          "format": "CD",
+          "tracks": [
+            {
+              "id": "d60f63d2-39a7-3bbc-9894-a6b851ca6348",
+              "position": 1,
+              "number": "1",
+              "title": "In Your World",
+              "length": 156893,
+              "recording": {
+                "id": "b609c761-8d03-45f0-9365-11cc74b4cb90",
+                "title": "In Your World",
+                "length": 157000
+              }
+            },
+            {
+              "id": "6c186394-d3e7-3a5e-a59b-8c0ebc978a49",
+              "position": 2,
+              "number": "2",
+              "title": "Dead Star",
+              "length": 221933,
+              "recording": {
+                "id": "799b6aa0-890e-4d4a-aba2-20afd41aec66",
+                "title": "Dead Star",
+                "length": 221933
+              }
+            },
+            {
+              "id": "0c25852b-6dea-3ed7-b7f9-7d0caa69acdc",
+              "position": 3,
+              "number": "3",
+              "title": "Can’t Take My Eyes Off You",
+              "length": 213000,
+              "recording": {
+                "id": "9a915ef3-7151-495c-a329-f709fccbcdfb",
+                "title": "Can’t Take My Eyes Off You",
+                "length": 211226
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b5b5e943-bdc9-4c46-be49-aba374437b37",
+      "title": "Dead Star / In Your World",
+      "status": "Official",
+      "date": "2002-07-01",
+      "country": "FR",
+      "media": [
+        {
+          "position": 1,
+          "format": "CD",
+          "tracks": [
+            {
+              "id": "5d7843c2-902d-39ca-a450-f1c15417fc9d",
+              "position": 1,
+              "number": "1",
+              "title": "Dead Star",
+              "length": 222346,
+              "recording": {
+                "id": "799b6aa0-890e-4d4a-aba2-20afd41aec66",
+                "title": "Dead Star",
+                "length": 221933
+              }
+            },
+            {
+              "id": "f0afbf32-9d60-332d-8898-be4f5fdf61af",
+              "position": 2,
+              "number": "2",
+              "title": "In Your World",
+              "length": 156893,
+              "recording": {
+                "id": "b609c761-8d03-45f0-9365-11cc74b4cb90",
+                "title": "In Your World",
+                "length": 157000
+              }
+            },
+            {
+              "id": "dedfe8e6-a651-3bd5-ac00-19eda76efde5",
+              "position": 3,
+              "number": "3",
+              "title": "Futurism",
+              "length": 207653,
+              "recording": {
+                "id": "92d95234-1b2a-4920-a201-d5157fcd6a5e",
+                "title": "Futurism",
+                "length": 207491
+              }
+            },
+            {
+              "id": "c74f0e1a-f172-34b7-bdcf-be38def313c1",
+              "position": 4,
+              "number": "4",
+              "title": "Can’t Take My Eyes Off You",
+              "length": 211226,
+              "recording": {
+                "id": "9a915ef3-7151-495c-a329-f709fccbcdfb",
+                "title": "Can’t Take My Eyes Off You",
+                "length": 211226
+              }
+            },
+            {
+              "id": "0b8119dd-e6e7-3c8d-82fc-14bee16373ce",
+              "position": 5,
+              "number": "5",
+              "title": "Dead Star (instrumental)",
+              "length": 219306,
+              "recording": {
+                "id": "21b6345e-a968-451c-b82c-5fe1b4ccc17a",
+                "title": "Dead Star (instrumental)",
+                "length": 219306
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "d3b8600b-716b-4fce-957f-86a9b6b55df7",
+      "title": "Dead Star / In Your World",
+      "status": "Official",
+      "date": "2009-06-09",
+      "country": "XW",
+      "media": [
+        {
+          "position": 1,
+          "format": "Digital Media",
+          "tracks": [
+            {
+              "id": "1b58a932-01d0-33b2-898f-3a05d008c332",
+              "position": 1,
+              "number": "1",
+              "title": "Dead Star",
+              "length": 220000,
+              "recording": {
+                "id": "799b6aa0-890e-4d4a-aba2-20afd41aec66",
+                "title": "Dead Star",
+                "length": 221933
+              }
+            },
+            {
+              "id": "520b1333-c02a-3771-9083-9c578e598298",
+              "position": 2,
+              "number": "2",
+              "title": "In Your World",
+              "length": 156000,
+              "recording": {
+                "id": "b609c761-8d03-45f0-9365-11cc74b4cb90",
+                "title": "In Your World",
+                "length": 157000
+              }
+            },
+            {
+              "id": "a2042fc3-eb1b-3950-9b69-4893e8ffa50f",
+              "position": 3,
+              "number": "3",
+              "title": "Futurism",
+              "length": 206000,
+              "recording": {
+                "id": "92d95234-1b2a-4920-a201-d5157fcd6a5e",
+                "title": "Futurism",
+                "length": 207491
+              }
+            },
+            {
+              "id": "85862854-2d38-3c9c-94ae-6a8145176399",
+              "position": 4,
+              "number": "4",
+              "title": "Can’t Take My Eyes Off You",
+              "length": 211000,
+              "recording": {
+                "id": "9a915ef3-7151-495c-a329-f709fccbcdfb",
+                "title": "Can’t Take My Eyes Off You",
+                "length": 211226
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

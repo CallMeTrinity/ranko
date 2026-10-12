@@ -14,6 +14,8 @@ final class CatalogHttpMock
     public const string OK_COMPUTER = 'b1392450-e666-3926-a536-22c65f834433';
     public const string OK_COMPUTER_FIRST_RELEASE = '1834eae1-741b-3c03-9ca5-0df3decb43ea';
     public const string KID_A = 'e75c0549-ad55-39e3-8025-c72c5d4a3c5d';
+    /** Single de Muse dont les faces B sont réparties entre ses éditions (CD1, CD2, pressages étrangers). */
+    public const string DEAD_STAR = 'ffc1785c-5ff0-3392-be18-a568469b7936';
     public const string UNKNOWN = '00000000-0000-0000-0000-000000000000';
     /** Recherche à laquelle MusicBrainz répond 503 "server busy". */
     public const string BUSY_QUERY = 'surcharge';
@@ -28,7 +30,9 @@ final class CatalogHttpMock
         'musicbrainz.org/ws/2/artist/'.self::RADIOHEAD => 'artist.json',
         'musicbrainz.org/ws/2/release-group?' => 'release-groups.json',
         'musicbrainz.org/ws/2/release-group/'.self::OK_COMPUTER => 'release-group-ok-computer.json',
+        'musicbrainz.org/ws/2/release-group/'.self::DEAD_STAR => 'release-group-dead-star.json',
         'musicbrainz.org/ws/2/release/'.self::OK_COMPUTER_FIRST_RELEASE => 'release-ok-computer.json',
+        'musicbrainz.org/ws/2/release?release-group='.self::DEAD_STAR => 'releases-dead-star.json',
         'coverartarchive.org/release-group/'.self::OK_COMPUTER => 'cover-ok-computer.json',
         'api.deezer.com/search?' => '../deezer/search-airbag.json',
         'api.deezer.com/track/'.self::DEEZER_AIRBAG => '../deezer/track-airbag.json',

@@ -51,7 +51,7 @@ final class CatalogImporterTest extends KernelTestCase
         $visible = array_map(static fn (Album $album) => $album->getName(), array_filter($albums, static fn (Album $album) => !$album->isHidden()));
         sort($visible);
 
-        self::assertCount(5, $albums);
+        self::assertCount(6, $albums);
         self::assertSame(['Kid A', 'My Iron Lung', 'OK Computer'], $visible);
 
         // Seuls les albums visibles partent en import de titres.
@@ -70,7 +70,7 @@ final class CatalogImporterTest extends KernelTestCase
 
         $this->importer->importDiscography($artist);
 
-        self::assertCount(5, self::em()->getRepository(Album::class)->findBy(['artist' => $artist]));
+        self::assertCount(6, self::em()->getRepository(Album::class)->findBy(['artist' => $artist]));
         self::assertSame(1, self::em()->getRepository(Artist::class)->count([]));
         self::assertSame('OK Computer', $okComputer->getName(), 'Les données de la source sont rafraîchies');
         self::assertTrue($okComputer->isHidden(), 'Le masquage décidé en back-office est conservé');

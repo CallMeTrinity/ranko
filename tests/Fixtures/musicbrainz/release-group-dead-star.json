@@ -1,0 +1,51 @@
+{
+  "id": "ffc1785c-5ff0-3392-be18-a568469b7936",
+  "title": "Dead Star / In Your World",
+  "primary-type": "Single",
+  "secondary-types": [],
+  "first-release-date": "2002-06-17",
+  "releases": [
+    {
+      "id": "a41286e5-e32b-4d29-bc4a-b08b567b2eb0",
+      "title": "In Your World / Dead Star",
+      "status": "Official",
+      "date": "2002-06-17",
+      "country": "GB"
+    },
+    {
+      "id": "89fbc35b-cfd3-4add-9ed8-ea03cf2cac7a",
+      "title": "Dead Star / In Your World",
+      "status": "Official",
+      "date": "2002-06-17",
+      "country": "GB"
+    },
+    {
+      "id": "7428e591-105e-4cea-8a46-fcfcaeae3b7a",
+      "title": "In Your World / Dead Star",
+      "status": "Official",
+      "date": "2002-06-20",
+      "country": "BE"
+    },
+    {
+      "id": "b5b5e943-bdc9-4c46-be49-aba374437b37",
+      "title": "Dead Star / In Your World",
+      "status": "Official",
+      "date": "2002-07-01",
+      "country": "FR"
+    },
+    {
+      "id": "53bad957-823e-4a99-83a0-c6edbc9b390d",
+      "title": "Dead Star / In Your World",
+      "status": "Official",
+      "date": "2003-03-10",
+      "country": "JP"
+    },
+    {
+      "id": "d3b8600b-716b-4fce-957f-86a9b6b55df7",
+      "title": "Dead Star / In Your World",
+      "status": "Official",
+      "date": "2009-06-09",
+      "country": "XW"
+    }
+  ]
+}

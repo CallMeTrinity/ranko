@@ -42,13 +42,15 @@ final class MusicBrainzProviderTest extends KernelTestCase
         $albums = $this->provider->fetchAlbums(CatalogHttpMock::RADIOHEAD);
         $byTitle = array_column(array_map(static fn ($album) => ['title' => $album->title, 'album' => $album], $albums), 'album', 'title');
 
-        self::assertCount(5, $albums);
+        self::assertCount(6, $albums);
         self::assertSame(AlbumType::Album, $byTitle['OK Computer']->type);
         self::assertSame('1997-05-21', $byTitle['OK Computer']->releaseDate);
         self::assertTrue($byTitle['OK Computer']->isMainRelease());
         self::assertSame(AlbumType::Ep, $byTitle['My Iron Lung']->type);
         self::assertTrue($byTitle['My Iron Lung']->isMainRelease());
         self::assertFalse($byTitle['5 Album Set']->isMainRelease());
+        self::assertSame(AlbumType::Single, $byTitle['Creep']->type);
+        self::assertFalse($byTitle['Creep']->isMainRelease(), 'Les singles arrivent masqués');
     }
 
     public function testTracklistComesFromEarliestOfficialEdition(): void
@@ -63,6 +65,26 @@ final class MusicBrainzProviderTest extends KernelTestCase
         self::assertSame(1, $tracklist->tracks[0]->position);
         self::assertSame(1, $tracklist->tracks[0]->discNumber);
         self::assertSame(284400, $tracklist->tracks[0]->durationMs);
+    }
+
+    public function testSingleTracklistMergesAllEditions(): void
+    {
+        // CD1 : Dead Star, In Your World, Futurism. CD2 : In Your World, Dead Star, Can’t Take
+        // My Eyes Off You. Le pressage français ajoute une instrumentale, le japonais deux lives
+        // et un "Dead Star" enregistré en double chez MusicBrainz.
+        $tracklist = $this->provider->fetchTracklist(CatalogHttpMock::DEAD_STAR);
+
+        self::assertNull($tracklist->editionId);
+        self::assertSame([
+            'Dead Star',
+            'In Your World',
+            'Futurism',
+            'Can’t Take My Eyes Off You',
+            'Dead Star (instrumental)',
+            'In Your World (live)',
+            'Dead Star (live)',
+        ], array_map(static fn ($track) => $track->title, $tracklist->tracks));
+        self::assertSame(range(1, 7), array_map(static fn ($track) => $track->position, $tracklist->tracks));
     }
 
     public function testCoverUrl(): void
