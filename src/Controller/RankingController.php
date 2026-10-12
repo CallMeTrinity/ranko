@@ -6,6 +6,7 @@ use App\Controller\Payload\CreateRankingPayload;
 use App\Controller\Payload\ItemPayload;
 use App\Controller\Payload\ReorderPayload;
 use App\Duel\DuelManager;
+use App\Entity\Artist;
 use App\Entity\CatalogItem;
 use App\Entity\Ranking;
 use App\Entity\User;
@@ -129,27 +130,38 @@ final class RankingController extends AbstractController
             // Un visiteur connecté peut confronter ce classement aux siens du même type.
             'comparable' => $viewer instanceof User && !$canEdit ? $rankings->findComparable($viewer, $ranking) : [],
             // Rendu dans la page plutôt que chargé par la frame : voir ranking/_pool.html.twig.
-            'pool' => $canEdit && $ranking->isCustom() ? $this->poolContent($ranking, '', self::POOL_PAGE) : null,
+            'pool' => $canEdit && $ranking->isCustom() ? $this->poolContent($ranking, '', null, self::POOL_PAGE) : null,
+            'pool_filters' => $canEdit && $ranking->isCustom() ? $this->poolFilters($ranking) : [],
         ]);
     }
 
     /**
-     * Réservoir d'une liste personnalisée : les éléments qu'on peut encore y ajouter.
+     * Réservoir d'une liste personnalisée : les éléments qu'on peut encore y ajouter,
+     * éventuellement restreints à un artiste ou un album (?filter=id).
      */
     #[Route('/{id<\d+>}/pool', name: 'app_ranking_pool', methods: ['GET'])]
     #[IsGranted(RankingVoter::EDIT, 'ranking')]
     public function pool(
         #[MapEntity(expr: 'repository.findWithItems(id)')] Ranking $ranking,
         #[MapQueryParameter] string $q = '',
+        // Vide quand on revient à "Tous" dans la liste déroulante.
+        #[MapQueryParameter(flags: \FILTER_NULL_ON_FAILURE)] ?int $filter = null,
         #[MapQueryParameter] int $limit = self::POOL_PAGE,
     ): Response {
         if (!$ranking->isCustom()) {
             throw $this->createNotFoundException();
         }
 
+        $filterItem = null === $filter ? null : $this->findItem($filter);
+        // Un filtre est un périmètre plus fin que celui de la liste, jamais un autre.
+        if (null !== $filterItem && (!\in_array($filterItem->getKind(), $ranking->getItemKind()->allowedScopeKinds(), true)
+            || (null !== $ranking->getScope() && !$filterItem->isWithin($ranking->getScope())))) {
+            throw $this->createNotFoundException();
+        }
+
         return $this->render('ranking/_pool.html.twig', [
             'ranking' => $ranking,
-            'pool' => $this->poolContent($ranking, trim($q), $limit),
+            'pool' => $this->poolContent($ranking, trim($q), $filterItem, $limit),
         ]);
     }
 
@@ -249,21 +261,57 @@ final class RankingController extends AbstractController
     }
 
     /**
-     * @return array{items: list<CatalogItem>, query: string, has_more: bool, next_limit: int}
+     * @return array{items: list<CatalogItem>, query: string, filter: ?CatalogItem, has_more: bool, next_limit: int}
      */
-    private function poolContent(Ranking $ranking, string $query, int $limit): array
+    private function poolContent(Ranking $ranking, string $query, ?CatalogItem $filter, int $limit): array
     {
         $limit = max(1, min($limit, self::POOL_MAX));
         $excludedIds = array_map(static fn (CatalogItem $item): int => (int) $item->getId(), $ranking->getItems());
         // Un élément de plus que demandé : sa présence dit s'il reste de quoi afficher.
-        $items = $this->catalog->searchRankable($ranking->getItemKind(), $ranking->getScope(), $query, $excludedIds, $limit + 1);
+        $items = $this->catalog->searchRankable($ranking->getItemKind(), $filter ?? $ranking->getScope(), $query, $excludedIds, $limit + 1);
 
         return [
             'items' => \array_slice($items, 0, $limit),
             'query' => $query,
+            'filter' => $filter,
             'has_more' => \count($items) > $limit && $limit < self::POOL_MAX,
             'next_limit' => min($limit + self::POOL_PAGE, self::POOL_MAX),
         ];
+    }
+
+    /**
+     * Choix du filtre du réservoir : les artistes pour une liste d'albums, les albums
+     * de l'artiste pour une liste de titres limitée à un artiste, et pour une liste de
+     * titres sans périmètre, chaque artiste suivi de ses albums.
+     *
+     * @return list<array{label: ?string, items: list<CatalogItem>}>
+     */
+    private function poolFilters(Ranking $ranking): array
+    {
+        $scope = $ranking->getScope();
+
+        return match ($ranking->getItemKind()) {
+            CatalogItemKind::Artist => [],
+            CatalogItemKind::Album => null === $scope ? [['label' => null, 'items' => $this->catalog->findRankable(CatalogItemKind::Artist)]] : [],
+            CatalogItemKind::Track => match (true) {
+                $scope instanceof Artist => [['label' => null, 'items' => $this->catalog->findRankable(CatalogItemKind::Album, $scope)]],
+                null === $scope => $this->albumsByArtist(),
+                default => [],
+            },
+        };
+    }
+
+    /**
+     * @return list<array{label: string, items: list<CatalogItem>}>
+     */
+    private function albumsByArtist(): array
+    {
+        $albums = $this->catalog->findRankable(CatalogItemKind::Album);
+
+        return array_map(static fn (CatalogItem $artist): array => [
+            'label' => $artist->getName(),
+            'items' => [$artist, ...array_filter($albums, static fn (CatalogItem $album): bool => $album->getParent() === $artist)],
+        ], $this->catalog->findRankable(CatalogItemKind::Artist));
     }
 
     private function findItem(int $id): CatalogItem

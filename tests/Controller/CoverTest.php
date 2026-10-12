@@ -4,6 +4,7 @@ namespace App\Tests\Controller;
 
 use App\Catalog\CatalogImporter;
 use App\Tests\Support\CreatesEntities;
+use Liip\ImagineBundle\Imagine\Cache\CacheManager;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 final class CoverTest extends WebTestCase
@@ -17,6 +18,9 @@ final class CoverTest extends WebTestCase
             ->setCoverUrl('https://coverartarchive.org/release/30702389-5c67-4438-9ea0-2351c8de0f1d/43287476628-1200.jpg');
         self::getContainer()->get(CatalogImporter::class)->storeCover($album);
         self::em()->flush();
+        // Le chemin de la copie locale ne dépend que de l'URL : sans ce ménage, les variantes
+        // d'un lancement précédent seraient servies directement, sans passer par resolve.
+        self::getContainer()->get(CacheManager::class)->remove($album->getCoverPath());
 
         $client->request('GET', '/albums/'.$album->getId());
 

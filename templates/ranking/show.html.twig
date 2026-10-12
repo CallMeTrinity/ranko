@@ -121,14 +121,40 @@
 
         <div class="{{ pool ? 'grid items-start gap-4 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]' }}">
             {% if pool %}
-                <aside class="card flex flex-col gap-3 p-3 md:sticky md:top-4" aria-labelledby="pool-title">
-                    <h2 id="pool-title" class="font-bold">{{ ranking.itemKind.label }}{{ ranking.scope ? ' de ' ~ ranking.scope.name }}</h2>
+                {# Sur mobile, menu ouvert par le bas avec le bouton Ajouter (popover natif : Échap et
+                   clic à côté le ferment). À partir de md, colonne fixe : on neutralise alors le style
+                   du navigateur pour un popover (fixed, inset 0, marge auto, taille au contenu). #}
+                <aside id="ranking-pool-sheet" popover aria-labelledby="pool-title"
+                       class="card hidden flex-col gap-3 p-3 text-ink open:flex backdrop:bg-ink/40
+                              max-md:inset-x-0 max-md:top-auto max-md:bottom-0 max-md:m-0 max-md:max-h-[85dvh] max-md:w-full max-md:max-w-none max-md:rounded-b-none max-md:border-b-0
+                              md:sticky md:inset-auto md:top-4 md:m-0 md:flex md:h-auto md:w-auto md:overflow-visible">
+                    <div class="flex items-center gap-3">
+                        <div class="min-w-0 flex-1">
+                            <h2 id="pool-title" class="font-bold">{{ ranking.itemKind.label }}{{ ranking.scope ? ' de ' ~ ranking.scope.name }}</h2>
+                            {# La liste est cachée sous le menu : on rappelle où elle en est. #}
+                            <p class="font-mono text-xs text-ink-muted md:hidden">{{ items|length }}{{ ranking.maxSize ? ' / ' ~ ranking.maxSize }} dans la liste{{ ranking.full ? ' · complet' }}</p>
+                        </div>
+                        <button type="button" popovertarget="ranking-pool-sheet" popovertargetaction="hide" class="btn-icon md:hidden" aria-label="Fermer">✕</button>
+                    </div>
                     {# Permanent : le rafraîchissement après un ajout ne vide pas la recherche en cours. #}
                     <form id="ranking-pool-search" method="get" action="{{ path('app_ranking_pool', {id: ranking.id}) }}" role="search"
-                          data-turbo-frame="ranking-pool" data-turbo-permanent data-controller="search">
+                          data-turbo-frame="ranking-pool" data-turbo-permanent data-controller="search" class="flex flex-col gap-2">
                         <input type="search" name="q" placeholder="Rechercher" aria-label="Rechercher dans le catalogue" autocomplete="off" class="w-full" data-action="search#submit">
+                        {% if pool_filters is not empty %}
+                            <select name="filter" aria-label="Filtrer par artiste ou album" class="w-full" data-action="search#submit">
+                                <option value="">{{ ranking.scope ? 'Tout ' ~ ranking.scope.name : 'Tous les artistes' }}</option>
+                                {% for group in pool_filters %}
+                                    {% if group.label %}<optgroup label="{{ group.label }}">{% endif %}
+                                    {% for item in group.items %}
+                                        {# Dans un groupe, l'artiste lui-même vaut "tous ses albums". #}
+                                        <option value="{{ item.id }}">{{ group.label and item.kind.value == 'artist' ? 'Tout ' ~ item.name : item.name }}</option>
+                                    {% endfor %}
+                                    {% if group.label %}</optgroup>{% endif %}
+                                {% endfor %}
+                            </select>
+                        {% endif %}
                     </form>
-                    <div class="max-h-[45vh] overflow-y-auto md:max-h-[calc(100vh-10rem)]">
+                    <div class="min-h-0 flex-1 overflow-y-auto md:max-h-[calc(100vh-10rem)]">
                         {{ include('ranking/_pool.html.twig') }}
                     </div>
                 </aside>
@@ -138,13 +164,17 @@
                 <p>Ce classement est vide.{% if can_edit and ranking.scope is null %} Ajoute des éléments depuis les pages <a href="{{ path('app_artist_index') }}" class="underline">artistes</a> et albums.{% endif %}</p>
             {% else %}
                 <div class="flex flex-col gap-2">
+                    {% if pool %}
+                        <button type="button" popovertarget="ranking-pool-sheet" class="btn btn-primary w-full md:hidden">Ajouter</button>
+                    {% endif %}
                     {% if ranking.maxSize %}
                         <p class="font-mono text-sm font-medium">{{ items|length }} / {{ ranking.maxSize }}{{ ranking.full and can_edit ? ' · complet : retire un élément pour en ajouter un autre' }}</p>
                     {% endif %}
                     {% if can_edit %}
                         <p class="text-[13px] text-ink-muted" data-sortable-status aria-live="polite">
                             {%- if pool and items is empty -%}
-                                Glisse des éléments ici depuis le catalogue, ou ajoute-les avec +.
+                                <span class="max-md:hidden">Glisse des éléments ici depuis le catalogue, ou ajoute-les avec +.</span>
+                                <span class="md:hidden">Ajoute des éléments depuis le catalogue.</span>
                             {%- else -%}
                                 Glisse les éléments par leur numéro<span class="max-sm:hidden">, ou utilise les flèches,</span> pour changer l'ordre.
                             {%- endif -%}

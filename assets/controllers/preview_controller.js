@@ -34,10 +34,15 @@ export default class extends Controller {
     static values = { url: String, name: String };
 
     connect() {
+        // Un rafraîchissement en morph (après un ajout à une liste) remet le bouton tel que
+        // le serveur l'a rendu, alors que l'extrait continue : on réaffiche l'état réel.
+        this.restore = () => this.render(this.state);
+        this.element.addEventListener('turbo:morph-element', this.restore);
         this.render('idle');
     }
 
     disconnect() {
+        this.element.removeEventListener('turbo:morph-element', this.restore);
         // Turbo remplace la page : l'extrait ne doit pas continuer sur la suivante.
         if (owner === this) {
             audio.pause();
@@ -64,6 +69,7 @@ export default class extends Controller {
     }
 
     render(state) {
+        this.state = state;
         this.element.textContent = ICONS[state];
         this.element.disabled = state === 'unavailable';
         this.element.setAttribute('aria-pressed', String(state === 'playing' || state === 'loading'));

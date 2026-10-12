@@ -206,6 +206,75 @@ final class RankingControllerTest extends WebTestCase
         self::assertSame([], self::em()->find(Ranking::class, $ranking->getId())?->getItems());
     }
 
+    public function testPoolFiltersByArtistOrAlbum(): void
+    {
+        $album = $this->album();
+        $portishead = self::createArtist('Portishead');
+        $dummy = self::createAlbum($portishead, 'Dummy', ['Mysterons', 'Sour Times']);
+        self::createAlbum($portishead, 'Third', ['Silence']);
+        $manager = self::getContainer()->get(RankingManager::class);
+        $user = self::createUser();
+        $tracks = $manager->createCustom($user, 'Titres', CatalogItemKind::Track);
+        $albums = $manager->createCustom($user, 'Albums', CatalogItemKind::Album);
+        $this->client->loginUser($user);
+
+        // Liste de titres sans périmètre : chaque artiste, puis ses albums.
+        $crawler = $this->client->request('GET', '/rankings/'.$tracks->getId());
+        self::assertSame(['Portishead', 'Radiohead'], $crawler->filter('select[name="filter"] optgroup')->each(static fn ($node): string => (string) $node->attr('label')));
+        self::assertSame(['Tout Portishead', 'Dummy', 'Third'], $crawler->filter('select[name="filter"] optgroup')->first()->filter('option')->each(static fn ($node): string => $node->text()));
+
+        // "Tous les artistes" envoie un filtre vide.
+        $crawler = $this->client->request('GET', '/rankings/'.$tracks->getId().'/pool?q=&filter=');
+        self::assertCount(6, $crawler->filter('[data-item-id]'));
+
+        $crawler = $this->client->request('GET', '/rankings/'.$tracks->getId().'/pool?filter='.$dummy->getId());
+        self::assertSame(['Mysterons', 'Sour Times'], $crawler->filter('[data-item-id] .truncate.font-semibold')->each(static fn ($node): string => $node->text()));
+
+        $crawler = $this->client->request('GET', '/rankings/'.$tracks->getId().'/pool?limit=1&filter='.$portishead->getId());
+        self::assertCount(1, $crawler->filter('[data-item-id]'));
+        self::assertStringContainsString('filter='.$portishead->getId(), (string) $crawler->selectLink('Voir plus')->attr('href'), 'Voir plus garde le filtre');
+
+        // Liste d'albums : filtre par artiste.
+        $crawler = $this->client->request('GET', '/rankings/'.$albums->getId().'/pool?filter='.$album->getArtist()->getId());
+        self::assertSame(['OK Computer'], $crawler->filter('[data-item-id] .truncate.font-semibold')->each(static fn ($node): string => $node->text()));
+    }
+
+    public function testPoolOffersPreviewsAndOpensFromTheAddButtonOnMobile(): void
+    {
+        $album = $this->album();
+        $manager = self::getContainer()->get(RankingManager::class);
+        $user = self::createUser();
+        $tracks = $manager->createCustom($user, 'Titres', CatalogItemKind::Track);
+        $albums = $manager->createCustom($user, 'Albums', CatalogItemKind::Album);
+        $this->client->loginUser($user);
+
+        $crawler = $this->client->request('GET', '/rankings/'.$tracks->getId());
+        self::assertCount(3, $crawler->filter('[data-controller="pool"] [data-controller="preview"]'), 'Un extrait par titre à ajouter');
+        self::assertSame('ranking-pool-sheet', $crawler->selectButton('Ajouter')->attr('popovertarget'));
+        self::assertCount(1, $crawler->filter('aside#ranking-pool-sheet[popover] select[name="filter"]'), 'Le filtre est dans le menu');
+
+        $crawler = $this->client->request('GET', '/rankings/'.$albums->getId().'/pool');
+        self::assertCount(1, $crawler->filter('[data-item-id]'));
+        self::assertCount(0, $crawler->filter('[data-controller="preview"]'), 'Pas d\'extrait pour un album');
+    }
+
+    public function testPoolFilterMustNarrowTheScope(): void
+    {
+        $album = $this->album();
+        $other = self::createAlbum(self::createArtist('Portishead'), 'Dummy', ['Mysterons']);
+        $manager = self::getContainer()->get(RankingManager::class);
+        $user = self::createUser();
+        $scoped = $manager->createCustom($user, 'Radiohead', CatalogItemKind::Track, scope: $album->getArtist());
+        $albums = $manager->createCustom($user, 'Albums', CatalogItemKind::Album);
+        $this->client->loginUser($user);
+
+        $this->client->request('GET', '/rankings/'.$scoped->getId().'/pool?filter='.$other->getId());
+        self::assertResponseStatusCodeSame(404, 'Un album hors du périmètre');
+
+        $this->client->request('GET', '/rankings/'.$albums->getId().'/pool?filter='.$album->getId());
+        self::assertResponseStatusCodeSame(404, 'On ne filtre pas des albums par album');
+    }
+
     public function testPoolIsForTheOwnerOfACustomListOnly(): void
     {
         $custom = self::getContainer()->get(RankingManager::class)->createCustom(self::createUser(), 'OK', CatalogItemKind::Artist);
