@@ -26,9 +26,12 @@ security:
                 enable_csrf: true
             logout:
                 path: app_logout
+            # La session PHP expire après 24 min d'inactivité (session.gc_maxlifetime) :
+            # c'est ce cookie qui garde l'utilisateur connecté au-delà.
             remember_me:
                 secret: '%kernel.secret%'
-                lifetime: 2592000 # 30 jours
+                lifetime: 31536000 # 1 an
+                name: REMEMBERME
 
     # Note: Only the *first* matching rule is applied
     access_control:
