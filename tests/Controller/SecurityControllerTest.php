@@ -22,6 +22,23 @@ final class SecurityControllerTest extends WebTestCase
         self::assertSelectorTextContains('nav', 'Profil');
     }
 
+    public function testStaysLoggedInAfterTheSessionExpires(): void
+    {
+        $client = self::createClient();
+        self::createUser('alice', password: 'secret123');
+
+        $client->request('GET', '/login');
+        // « Rester connecté » est coché par défaut : pas besoin de le cocher ici.
+        $client->submitForm('Se connecter', ['_username' => 'alice@example.com', '_password' => 'secret123']);
+        self::assertNotNull($client->getCookieJar()->get('REMEMBERME'));
+
+        // Session expirée côté serveur : seul le cookie remember_me reste.
+        $client->getCookieJar()->expire('MOCKSESSID');
+        $client->request('GET', '/');
+
+        self::assertSelectorTextContains('nav', 'Profil');
+    }
+
     public function testLoginWithWrongPassword(): void
     {
         $client = self::createClient();

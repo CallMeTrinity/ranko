@@ -28,7 +28,7 @@ final class ShowcaseSection implements ProfileSection
         $globals = [];
         foreach (CatalogItemKind::cases() as $kind) {
             foreach ($context->publicRankings as $ranking) {
-                if ($ranking->getItemKind() === $kind && null === $ranking->getScope()) {
+                if ($ranking->getItemKind() === $kind && null === $ranking->getScope() && !$ranking->isCustom()) {
                     $globals[$kind->value] = $ranking;
                 }
             }

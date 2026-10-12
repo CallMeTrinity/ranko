@@ -45,6 +45,26 @@ final class RankingManager
         return $ranking;
     }
 
+    public function createCustom(User $owner, string $name, CatalogItemKind $kind, ?int $maxSize = null, ?CatalogItem $scope = null): Ranking
+    {
+        $ranking = new Ranking($owner, $kind, $scope, trim($name), $maxSize);
+        $this->entityManager->persist($ranking);
+        $this->entityManager->flush();
+
+        return $ranking;
+    }
+
+    /**
+     * Ajoute l'élément à la position donnée (à la fin par défaut).
+     *
+     * @throws \InvalidArgumentException si l'élément n'a pas sa place dans ce classement, ou s'il est complet
+     */
+    public function addItem(Ranking $ranking, CatalogItem $item, ?int $position = null): void
+    {
+        $ranking->add($item, $position);
+        $this->entityManager->flush();
+    }
+
     /**
      * Ajoute l'élément au classement global de son type (créé au besoin), en dernier.
      */
@@ -59,13 +79,14 @@ final class RankingManager
 
     /**
      * Éléments du périmètre pas encore classés : nouveaux albums importés, éléments
-     * rendus visibles... Toujours vide pour un classement sans périmètre.
+     * rendus visibles... Toujours vide pour un classement sans périmètre, et pour une
+     * liste personnalisée : ne pas y être est un choix.
      *
      * @return list<CatalogItem>
      */
     public function findMissingItems(Ranking $ranking): array
     {
-        if (null === $ranking->getScope()) {
+        if (null === $ranking->getScope() || $ranking->isCustom()) {
             return [];
         }
 

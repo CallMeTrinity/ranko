@@ -47,6 +47,21 @@ final class RankingManagerTest extends KernelTestCase
         self::assertSame($global->getId(), $this->manager->findOrCreate($user, CatalogItemKind::Track)->getId());
     }
 
+    public function testCustomListsLiveNextToTheAutomaticRankingAndStartEmpty(): void
+    {
+        $user = self::createUser();
+        $album = self::createAlbum(self::createArtist(), trackNames: ['Airbag', 'Paranoid Android']);
+
+        $custom = $this->manager->createCustom($user, '  Pour courir ', CatalogItemKind::Track, 5, $album);
+        $automatic = $this->manager->findOrCreate($user, CatalogItemKind::Track, $album);
+
+        self::assertNotSame($custom->getId(), $automatic->getId());
+        self::assertSame('Pour courir', $custom->getTitle());
+        self::assertSame([], $custom->getItems(), 'Une liste personnalisée naît vide, même avec un périmètre');
+        self::assertSame([], $this->manager->findMissingItems($custom), 'Ne pas être dans la liste est un choix');
+        self::assertCount(2, $automatic->getItems());
+    }
+
     public function testMissingItemsAreDetectedAndAppended(): void
     {
         $album = self::createAlbum(self::createArtist(), trackNames: ['Airbag', 'Paranoid Android']);

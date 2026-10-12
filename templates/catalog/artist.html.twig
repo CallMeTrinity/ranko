@@ -17,6 +17,7 @@
                     {{ include('ranking/_create_button.html.twig', {kind: 'album', scope: artist, label: 'Classer ses albums'}) }}
                     {{ include('ranking/_create_button.html.twig', {kind: 'track', scope: artist, label: 'Classer tous ses titres'}) }}
                     {{ include('ranking/_add_button.html.twig', {item: artist, label: 'Ajouter à mon top artistes'}) }}
+                    <a href="{{ path('app_ranking_new', {scope: artist.id}) }}" class="btn">Créer une liste</a>
                 </div>
             </div>
         </header>

@@ -11,6 +11,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Authenticator\Passport\Badge\RememberMeBadge;
 
 final class RegistrationController extends AbstractController
 {
@@ -34,7 +35,8 @@ final class RegistrationController extends AbstractController
             $entityManager->persist($user);
             $entityManager->flush();
 
-            $security->login($user, 'form_login', 'main');
+            // Sans badge activé, le compte tout juste créé n'aurait que la session (24 min).
+            $security->login($user, 'form_login', 'main', [(new RememberMeBadge())->enable()]);
 
             return $this->redirectToRoute('app_home');
         }

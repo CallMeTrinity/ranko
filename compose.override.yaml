@@ -4,6 +4,10 @@ services:
   database:
     ports:
       - "3306:3306"
+    # Le Symfony CLI exposerait sinon un DATABASE_URL en root:<MARIADB_PASSWORD> (il ne lit
+    # pas MARIADB_USER) qui écrase celui de .env : on garde celui de .env.
+    labels:
+      com.symfony.server.service-ignore: true
 ###< doctrine/doctrine-bundle ###
 
 ###> symfony/mailer ###

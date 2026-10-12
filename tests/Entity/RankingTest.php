@@ -37,6 +37,42 @@ final class RankingTest extends TestCase
         self::assertSame('Titres de OK Computer', (new Ranking($owner, CatalogItemKind::Track, $this->album))->getTitle());
     }
 
+    public function testCustomListIsNamedAndRefusesItemsOnceFull(): void
+    {
+        [$a, $b, $c] = $this->tracks('A', 'B', 'C');
+        $ranking = new Ranking(new User('a@example.com', 'alice'), CatalogItemKind::Track, $this->album, 'Pour courir', 2);
+        $ranking->add($a);
+        $ranking->add($b, position: 1);
+
+        self::assertTrue($ranking->isCustom());
+        self::assertSame('Pour courir', $ranking->getTitle());
+        self::assertTrue($ranking->isFull());
+
+        $ranking->add($a);
+        self::assertSame(['B', 'A'], $this->names($ranking), 'Ajouter un élément déjà présent ne compte pas comme une place');
+
+        $this->expectException(\InvalidArgumentException::class);
+        $ranking->add($c);
+    }
+
+    /**
+     * @return iterable<string, array{?string, ?int}>
+     */
+    public static function invalidCustomLists(): iterable
+    {
+        yield 'nom vide' => ['  ', null];
+        yield 'zéro place' => ['Top', 0];
+        yield 'places sans nom' => [null, 10];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('invalidCustomLists')]
+    public function testRejectsInvalidCustomList(?string $name, ?int $maxSize): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+
+        new Ranking(new User('a@example.com', 'alice'), CatalogItemKind::Track, null, $name, $maxSize);
+    }
+
     public function testAddAppendsOrInsertsAndShifts(): void
     {
         [$a, $b, $c] = $this->tracks('A', 'B', 'C');

@@ -22,6 +22,7 @@
                     <div class="flex flex-wrap gap-2">
                         {{ include('ranking/_create_button.html.twig', {kind: 'track', scope: album, label: 'Classer les titres de l\'album'}) }}
                         {{ include('ranking/_add_button.html.twig', {item: album, label: 'Ajouter à mon top albums'}) }}
+                        <a href="{{ path('app_ranking_new', {scope: album.id}) }}" class="btn">Créer une liste</a>
                     </div>
                 </div>
             </div>

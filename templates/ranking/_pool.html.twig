@@ -1,0 +1,33 @@
+{# Réservoir d'une liste personnalisée : les éléments qu'on peut encore y ajouter, en les
+   glissant dans la liste ou avec +. Variables : ranking, pool (items, query, has_more, next_limit)
+   Rendu dans la page et sans src : après un ajout, Turbo rafraîchit la page en morph et ne
+   recharge une frame depuis son src que si elle en a un, c'est-à-dire après une recherche.
+   Un src écrit ici remplacerait celui de la recherche en cours. #}
+{% set token = csrf_token('ranking' ~ ranking.id) %}
+<turbo-frame id="ranking-pool" target="_top" refresh="morph" class="block">
+    {% if pool.items is empty %}
+        <p class="p-2 text-sm text-ink-muted">
+            {% if pool.query %}Aucun résultat pour « {{ pool.query }} ».{% else %}Tout le catalogue est déjà dans ta liste.{% endif %}
+        </p>
+    {% else %}
+        <ul class="flex flex-col gap-2" data-controller="pool" data-pool-group-value="ranking-{{ ranking.id }}">
+            {% for item in pool.items %}
+                <li class="flex h-[58px] items-center gap-2 rounded-control border-2 border-ink bg-card pr-1.5" data-item-id="{{ item.id }}">
+                    <span data-sortable-handle title="Glisser dans la liste" aria-hidden="true"
+                          class="grid w-7 shrink-0 cursor-grab touch-none select-none place-items-center self-stretch rounded-l-[10px] border-r-2 border-ink bg-sunken text-ink-muted">⠿</span>
+                    <div class="min-w-0 flex-1">{{ include('catalog/_item.html.twig', {item: item}) }}</div>
+                    <form method="post" action="{{ path('app_ranking_add', {id: ranking.id}) }}">
+                        <input type="hidden" name="itemId" value="{{ item.id }}">
+                        {# Activé par sortable#add quand l'élément est déposé à une position précise. #}
+                        <input type="hidden" name="position" disabled data-pool-position>
+                        <input type="hidden" name="_token" value="{{ token }}">
+                        <button type="submit" class="btn-icon disabled:cursor-default disabled:opacity-50" aria-label="Ajouter {{ item.name }} à la liste" {{ ranking.full ? 'disabled' }}>+</button>
+                    </form>
+                </li>
+            {% endfor %}
+        </ul>
+        {% if pool.has_more %}
+            <a href="{{ path('app_ranking_pool', {id: ranking.id, q: pool.query, limit: pool.next_limit}) }}" data-turbo-frame="ranking-pool" class="btn mt-2 w-full">Voir plus</a>
+        {% endif %}
+    {% endif %}
+</turbo-frame>

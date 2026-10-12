@@ -9,6 +9,9 @@ use App\Duel\DuelManager;
 use App\Entity\CatalogItem;
 use App\Entity\Ranking;
 use App\Entity\User;
+use App\Enum\CatalogItemKind;
+use App\Form\CustomRankingFormType;
+use App\Form\Data\CustomRankingData;
 use App\Ranking\Comparison\RankingComparator;
 use App\Ranking\RankingManager;
 use App\Repository\CatalogItemRepository;
@@ -19,6 +22,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\ExpressionLanguage\Expression;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Attribute\MapQueryParameter;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
@@ -32,6 +36,10 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 final class RankingController extends AbstractController
 {
     private const string TOKEN = '"ranking" ~ args["ranking"].getId()';
+
+    /** Éléments affichés à la fois dans le réservoir d'une liste personnalisée. */
+    private const int POOL_PAGE = 30;
+    private const int POOL_MAX = 300;
 
     public function __construct(
         private readonly RankingManager $manager,
@@ -64,6 +72,36 @@ final class RankingController extends AbstractController
         return $this->redirectToRoute('app_ranking_show', ['id' => $ranking->getId()]);
     }
 
+    /**
+     * Liste personnalisée, éventuellement limitée à un artiste ou un album (?scope=id).
+     */
+    #[Route('/new', name: 'app_ranking_new', methods: ['GET', 'POST'])]
+    #[IsGranted('ROLE_USER')]
+    public function new(#[CurrentUser] User $user, Request $request, #[MapQueryParameter] ?int $scope = null): Response
+    {
+        $scopeItem = null === $scope ? null : $this->findItem($scope);
+        $kinds = null === $scopeItem ? CatalogItemKind::cases() : $scopeItem->getKind()->rankableKinds();
+        if ([] === $kinds) {
+            throw $this->createNotFoundException('Rien à classer dans ce périmètre.');
+        }
+
+        $data = new CustomRankingData();
+        $data->kind = $kinds[0];
+        $form = $this->createForm(CustomRankingFormType::class, $data, ['kinds' => $kinds]);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $ranking = $this->manager->createCustom($user, (string) $data->name, $data->kind ?? $kinds[0], $data->maxSize, $scopeItem);
+
+            return $this->redirectToRoute('app_ranking_show', ['id' => $ranking->getId()]);
+        }
+
+        return $this->render('ranking/new.html.twig', [
+            'form' => $form,
+            'scope' => $scopeItem,
+        ]);
+    }
+
     #[Route('/add', name: 'app_ranking_add_item', methods: ['POST'])]
     #[IsGranted('ROLE_USER')]
     #[IsCsrfTokenValid('ranking-add')]
@@ -90,7 +128,48 @@ final class RankingController extends AbstractController
             'active_duel' => $canEdit ? $duels->findActive($ranking) : null,
             // Un visiteur connecté peut confronter ce classement aux siens du même type.
             'comparable' => $viewer instanceof User && !$canEdit ? $rankings->findComparable($viewer, $ranking) : [],
+            // Rendu dans la page plutôt que chargé par la frame : voir ranking/_pool.html.twig.
+            'pool' => $canEdit && $ranking->isCustom() ? $this->poolContent($ranking, '', self::POOL_PAGE) : null,
         ]);
+    }
+
+    /**
+     * Réservoir d'une liste personnalisée : les éléments qu'on peut encore y ajouter.
+     */
+    #[Route('/{id<\d+>}/pool', name: 'app_ranking_pool', methods: ['GET'])]
+    #[IsGranted(RankingVoter::EDIT, 'ranking')]
+    public function pool(
+        #[MapEntity(expr: 'repository.findWithItems(id)')] Ranking $ranking,
+        #[MapQueryParameter] string $q = '',
+        #[MapQueryParameter] int $limit = self::POOL_PAGE,
+    ): Response {
+        if (!$ranking->isCustom()) {
+            throw $this->createNotFoundException();
+        }
+
+        return $this->render('ranking/_pool.html.twig', [
+            'ranking' => $ranking,
+            'pool' => $this->poolContent($ranking, trim($q), $limit),
+        ]);
+    }
+
+    /**
+     * Ajoute un élément du réservoir, à la fin ou à la position où on l'a déposé.
+     */
+    #[Route('/{id<\d+>}/add', name: 'app_ranking_add', methods: ['POST'])]
+    #[IsGranted(RankingVoter::EDIT, 'ranking')]
+    #[IsCsrfTokenValid(new Expression(self::TOKEN))]
+    public function add(Ranking $ranking, #[MapRequestPayload] ItemPayload $payload): Response
+    {
+        $item = $this->findItem($payload->itemId);
+
+        try {
+            $this->manager->addItem($ranking, $item, $payload->position);
+        } catch (\InvalidArgumentException $exception) {
+            $this->addFlash('error', $exception->getMessage());
+        }
+
+        return $this->redirectToRoute('app_ranking_show', ['id' => $ranking->getId()]);
     }
 
     #[Route('/{id<\d+>}/compare/{otherId<\d+>}', name: 'app_ranking_compare', methods: ['GET'])]
@@ -167,6 +246,24 @@ final class RankingController extends AbstractController
         $this->addFlash('success', 'Classement supprimé.');
 
         return $this->redirectToRoute('app_ranking_index');
+    }
+
+    /**
+     * @return array{items: list<CatalogItem>, query: string, has_more: bool, next_limit: int}
+     */
+    private function poolContent(Ranking $ranking, string $query, int $limit): array
+    {
+        $limit = max(1, min($limit, self::POOL_MAX));
+        $excludedIds = array_map(static fn (CatalogItem $item): int => (int) $item->getId(), $ranking->getItems());
+        // Un élément de plus que demandé : sa présence dit s'il reste de quoi afficher.
+        $items = $this->catalog->searchRankable($ranking->getItemKind(), $ranking->getScope(), $query, $excludedIds, $limit + 1);
+
+        return [
+            'items' => \array_slice($items, 0, $limit),
+            'query' => $query,
+            'has_more' => \count($items) > $limit && $limit < self::POOL_MAX,
+            'next_limit' => min($limit + self::POOL_PAGE, self::POOL_MAX),
+        ];
     }
 
     private function findItem(int $id): CatalogItem

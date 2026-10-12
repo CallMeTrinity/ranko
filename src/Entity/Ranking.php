@@ -14,11 +14,17 @@ use Doctrine\ORM\Mapping as ORM;
  * optionnel (un artiste, un album). "Titres de OK Computer" = Track + scope OK Computer ;
  * "Top albums" = Album sans scope. Le n°1 d'un classement d'album est le titre préféré
  * de cet album : pas besoin de champ dédié.
+ *
+ * Une liste personnalisée est un classement nommé : on en a autant qu'on veut par type
+ * et périmètre, elle naît vide, on n'y met que ce qu'on connaît, avec un nombre de
+ * places optionnel. Le périmètre ne sert alors qu'à filtrer ce qu'on peut y ajouter.
  */
 #[ORM\Entity(repositoryClass: RankingRepository::class)]
 #[ORM\Index(columns: ['visibility', 'updated_at'])]
 class Ranking
 {
+    public const int NAME_MAX_LENGTH = 80;
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -52,9 +58,23 @@ class Ranking
         #[ORM\ManyToOne]
         #[ORM\JoinColumn(onDelete: 'CASCADE')]
         private ?CatalogItem $scope = null,
+        /** Nom d'une liste personnalisée, null pour un classement automatique. */
+        #[ORM\Column(length: self::NAME_MAX_LENGTH, nullable: true)]
+        private ?string $name = null,
+        /** Nombre de places, null pour une liste sans limite. */
+        #[ORM\Column(nullable: true)]
+        private ?int $maxSize = null,
     ) {
         if (null !== $scope && !\in_array($scope->getKind(), $itemKind->allowedScopeKinds(), true)) {
             throw new \InvalidArgumentException(sprintf('Un classement de type "%s" ne peut pas avoir un périmètre de type "%s".', $itemKind->value, $scope->getKind()->value));
+        }
+
+        if (null !== $name && '' === trim($name)) {
+            throw new \InvalidArgumentException('Une liste personnalisée doit avoir un nom.');
+        }
+
+        if (null !== $maxSize && (null === $name || $maxSize < 1)) {
+            throw new \InvalidArgumentException('Seule une liste personnalisée a un nombre de places, et il est positif.');
         }
 
         $this->createdAt = new \DateTimeImmutable();
@@ -82,8 +102,32 @@ class Ranking
         return $this->scope;
     }
 
+    public function getName(): ?string
+    {
+        return $this->name;
+    }
+
+    public function isCustom(): bool
+    {
+        return null !== $this->name;
+    }
+
+    public function getMaxSize(): ?int
+    {
+        return $this->maxSize;
+    }
+
+    public function isFull(): bool
+    {
+        return null !== $this->maxSize && $this->entries->count() >= $this->maxSize;
+    }
+
     public function getTitle(): string
     {
+        if (null !== $this->name) {
+            return $this->name;
+        }
+
         $kind = match ($this->itemKind) {
             CatalogItemKind::Artist => 'artistes',
             CatalogItemKind::Album => 'albums',
@@ -165,6 +209,10 @@ class Ranking
 
         if ($this->contains($item)) {
             return;
+        }
+
+        if ($this->isFull()) {
+            throw new \InvalidArgumentException(sprintf('"%s" est complet : retire un élément pour faire de la place.', $this->getTitle()));
         }
 
         $items = $this->getItems();

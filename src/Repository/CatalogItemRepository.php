@@ -8,6 +8,7 @@ use App\Entity\CatalogItem;
 use App\Entity\Track;
 use App\Enum\CatalogItemKind;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -29,29 +30,59 @@ class CatalogItemRepository extends ServiceEntityRepository
      */
     public function findRankable(CatalogItemKind $kind, ?CatalogItem $scope = null): array
     {
-        return match ($kind) {
-            CatalogItemKind::Artist => $this->findRankableArtists(),
-            CatalogItemKind::Album => $this->findRankableAlbums($scope instanceof Artist ? $scope : null),
-            CatalogItemKind::Track => $this->findRankableTracks($scope instanceof Artist || $scope instanceof Album ? $scope : null),
-        };
+        return $this->rankableQueryBuilder($kind, $scope)->getQuery()->getResult();
     }
 
     /**
-     * @return list<Artist>
+     * Comme findRankable(), filtré par une recherche sur le nom de l'élément ou de ses
+     * parents ("radiohead" trouve aussi ses albums et ses titres), sans les éléments
+     * exclus et limité en nombre.
+     *
+     * @param list<int> $excludedIds
+     *
+     * @return list<CatalogItem>
      */
-    private function findRankableArtists(): array
+    public function searchRankable(CatalogItemKind $kind, ?CatalogItem $scope, string $search, array $excludedIds, int $limit): array
+    {
+        $qb = $this->rankableQueryBuilder($kind, $scope)->setMaxResults($limit);
+        $alias = $qb->getRootAliases()[0];
+
+        if ('' !== $search) {
+            // Les alias existent selon le type : artist toujours, album pour un album ou un titre.
+            $fields = match ($kind) {
+                CatalogItemKind::Artist => ['artist.name'],
+                CatalogItemKind::Album => ['album.name', 'artist.name'],
+                CatalogItemKind::Track => ['track.name', 'album.name', 'artist.name'],
+            };
+            $qb->andWhere($qb->expr()->orX(...array_map(static fn (string $field): string => $field.' LIKE :search', $fields)))
+                ->setParameter('search', '%'.addcslashes($search, '%_\\').'%');
+        }
+
+        if ([] !== $excludedIds) {
+            $qb->andWhere($alias.'.id NOT IN (:excluded)')->setParameter('excluded', $excludedIds);
+        }
+
+        return $qb->getQuery()->getResult();
+    }
+
+    private function rankableQueryBuilder(CatalogItemKind $kind, ?CatalogItem $scope): QueryBuilder
+    {
+        return match ($kind) {
+            CatalogItemKind::Artist => $this->rankableArtists(),
+            CatalogItemKind::Album => $this->rankableAlbums($scope instanceof Artist ? $scope : null),
+            CatalogItemKind::Track => $this->rankableTracks($scope instanceof Artist || $scope instanceof Album ? $scope : null),
+        };
+    }
+
+    private function rankableArtists(): QueryBuilder
     {
         return $this->getEntityManager()->createQueryBuilder()
             ->select('artist')->from(Artist::class, 'artist')
             ->andWhere('artist.hidden = false')
-            ->orderBy('artist.name')
-            ->getQuery()->getResult();
+            ->orderBy('artist.name');
     }
 
-    /**
-     * @return list<Album>
-     */
-    private function findRankableAlbums(?Artist $artist): array
+    private function rankableAlbums(?Artist $artist): QueryBuilder
     {
         $qb = $this->getEntityManager()->createQueryBuilder()
             ->select('album')->from(Album::class, 'album')
@@ -64,13 +95,10 @@ class CatalogItemRepository extends ServiceEntityRepository
             $qb->andWhere('artist = :artist')->setParameter('artist', $artist);
         }
 
-        return $qb->getQuery()->getResult();
+        return $qb;
     }
 
-    /**
-     * @return list<Track>
-     */
-    private function findRankableTracks(Artist|Album|null $scope): array
+    private function rankableTracks(Artist|Album|null $scope): QueryBuilder
     {
         $qb = $this->getEntityManager()->createQueryBuilder()
             ->select('track', 'album')->from(Track::class, 'track')
@@ -88,6 +116,6 @@ class CatalogItemRepository extends ServiceEntityRepository
             $qb->andWhere('album = :scope')->setParameter('scope', $scope);
         }
 
-        return $qb->getQuery()->getResult();
+        return $qb;
     }
 }

@@ -16,7 +16,8 @@ final class CompatibilityCalculator
 
     /**
      * Compare les classements de l'utilisateur à ceux donnés, deux à deux quand ils
-     * portent sur la même chose (même type, même périmètre).
+     * portent sur la même chose (même type, même périmètre). Les listes personnalisées
+     * sont écartées : deux listes "Albums de l'été" n'ont en commun que le nom.
      *
      * @param list<Ranking> $theirs
      */
@@ -24,12 +25,14 @@ final class CompatibilityCalculator
     {
         $mineByTarget = [];
         foreach ($this->rankings->findByOwner($user) as $ranking) {
-            $mineByTarget[self::target($ranking)] = $ranking;
+            if (!$ranking->isCustom()) {
+                $mineByTarget[self::target($ranking)] = $ranking;
+            }
         }
 
         $matches = [];
         foreach ($theirs as $ranking) {
-            $mine = $mineByTarget[self::target($ranking)] ?? null;
+            $mine = $ranking->isCustom() ? null : $mineByTarget[self::target($ranking)] ?? null;
             if (null !== $mine && $mine !== $ranking) {
                 $matches[] = [$mine, $ranking];
             }

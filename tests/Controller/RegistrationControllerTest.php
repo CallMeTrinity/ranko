@@ -23,6 +23,7 @@ final class RegistrationControllerTest extends WebTestCase
         ]);
 
         self::assertResponseRedirects('/');
+        self::assertNotNull($client->getCookieJar()->get('REMEMBERME'));
         $client->followRedirect();
         self::assertSelectorTextContains('nav', 'Classements');
         self::assertNotNull(self::em()->getRepository(User::class)->findOneBy(['username' => 'carol']));

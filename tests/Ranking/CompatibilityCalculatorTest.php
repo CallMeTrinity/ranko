@@ -45,6 +45,23 @@ final class CompatibilityCalculatorTest extends KernelTestCase
         self::assertEqualsWithDelta(8 / 9, $compatibility->agreement(), 1e-9, 'Pondéré par paires, pas (2/3 + 1) / 2');
     }
 
+    public function testCustomListsAreNeverPaired(): void
+    {
+        $album = self::createAlbum(self::createArtist(), trackNames: ['Airbag', 'Paranoid Android']);
+        $alice = self::createUser('alice');
+        $bob = self::createUser('bob');
+        $manager = self::getContainer()->get(RankingManager::class);
+        $mine = $manager->createCustom($alice, 'Préférés', CatalogItemKind::Track, scope: $album);
+        $theirs = $manager->createCustom($bob, 'Préférés', CatalogItemKind::Track, scope: $album);
+        foreach ($album->getTracks() as $track) {
+            $mine->add($track);
+            $theirs->add($track);
+        }
+        self::em()->flush();
+
+        self::assertSame([], $this->calculator->between($alice, [$theirs])->pairs);
+    }
+
     public function testRankingsWithoutCommonPairAreIgnored(): void
     {
         $album = self::createAlbum(self::createArtist(), trackNames: ['Airbag', 'Paranoid Android']);

@@ -22,10 +22,14 @@ class RankingRepository extends ServiceEntityRepository
         parent::__construct($registry, Ranking::class);
     }
 
+    /**
+     * Classement automatique de ce type et de ce périmètre. Les listes personnalisées,
+     * qui peuvent porter sur la même chose, ne comptent pas.
+     */
     public function findOneByOwnerAndTarget(User $owner, CatalogItemKind $kind, ?CatalogItem $scope): ?Ranking
     {
         // findOneBy(['scope' => null]) génère bien "IS NULL" : un seul chemin pour les deux cas.
-        return $this->findOneBy(['owner' => $owner, 'itemKind' => $kind, 'scope' => $scope]);
+        return $this->findOneBy(['owner' => $owner, 'itemKind' => $kind, 'scope' => $scope, 'name' => null]);
     }
 
     /**

@@ -1,0 +1,47 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nouvelle liste · Ranko{% endblock %}
+
+{% block body %}
+    <div class="mx-auto flex max-w-sm flex-col gap-6">
+        <nav class="text-sm text-ink-muted">
+            {% if scope %}
+                <a href="{{ path(scope.kind.value == 'artist' ? 'app_artist_show' : 'app_album_show', {id: scope.id}) }}">‹ {{ scope.name }}</a>
+            {% else %}
+                <a href="{{ path('app_ranking_index') }}">‹ Mes classements</a>
+            {% endif %}
+        </nav>
+
+        <div class="flex flex-col gap-1.5">
+            <h1 class="text-[30px] font-bold tracking-[-0.6px]">Nouvelle liste</h1>
+            <p class="text-sm text-ink-muted">Tu choisis ce qui y entre : pas besoin de tout classer.</p>
+        </div>
+
+        {% set field = {row_attr: {class: 'flex flex-col gap-1.5 font-semibold'}, attr: {class: 'py-3 font-normal'}} %}
+        {{ form_start(form, {attr: {class: 'flex flex-col gap-4'}}) }}
+            {{ form_row(form.name, field) }}
+
+            <fieldset class="flex flex-col gap-1.5">
+                <legend class="mb-1.5 font-semibold">{{ form.kind.vars.label }}</legend>
+                <div class="flex flex-wrap gap-2">
+                    {% for choice in form.kind %}
+                        <label class="btn has-checked:bg-ink has-checked:text-paper has-focus-visible:outline-2 has-focus-visible:outline-offset-2">
+                            {{ form_widget(choice, {attr: {class: 'sr-only'}}) }}{{ choice.vars.label }}
+                        </label>
+                    {% endfor %}
+                </div>
+                {{ form_errors(form.kind) }}
+            </fieldset>
+
+            {% if scope %}
+                <p class="text-sm">
+                    Uniquement dans <strong>{{ scope.name }}</strong>.
+                    <a href="{{ path('app_ranking_new') }}" class="text-ink-muted underline">Tout le catalogue</a>
+                </p>
+            {% endif %}
+
+            {{ form_row(form.maxSize, field) }}
+            <button type="submit" class="btn btn-lg btn-primary">Créer la liste</button>
+        {{ form_end(form) }}
+    </div>
+{% endblock %}

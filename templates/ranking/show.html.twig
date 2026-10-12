@@ -6,6 +6,11 @@
 {% block title %}{{ ranking.title }} · Ranko{% endblock %}
 
 {% block meta %}
+    {% if pool %}
+        {# Ajouter ou retirer un élément redirige ici : on rafraîchit sans perdre le défilement. #}
+        <meta name="turbo-refresh-method" content="morph">
+        <meta name="turbo-refresh-scroll" content="preserve">
+    {% endif %}
     {% if ranking.public %}
         {# Aperçu du lien de partage dans les messageries et réseaux sociaux. #}
         {% set top = ranking.items|slice(0, 3) %}
@@ -45,7 +50,7 @@
                 <div class="flex min-w-0 flex-col gap-1.5">
                     <h1 class="font-mono text-[19px] leading-tight font-medium uppercase md:text-2xl">{{ ranking.title }}</h1>
                     <p class="text-[13px] leading-snug text-ink-muted">
-                        par <a href="{{ path('app_profile', {username: ranking.owner.username}) }}" class="underline">{{ ranking.owner.username }}</a> · {{ ranking.visibility.label }} · mis à jour le {{ ranking.updatedAt|date('d/m/Y') }}
+                        {% if ranking.custom %}{{ ranking.itemKind.label }}{{ ranking.scope ? ' de ' ~ ranking.scope.name }} · {% endif %}par <a href="{{ path('app_profile', {username: ranking.owner.username}) }}" class="underline">{{ ranking.owner.username }}</a> · {{ ranking.visibility.label }} · mis à jour le {{ ranking.updatedAt|date('d/m/Y') }}
                     </p>
                 </div>
             </div>
@@ -114,58 +119,87 @@
             </section>
         {% endif %}
 
-        {% if items is empty %}
-            <p>Ce classement est vide.{% if can_edit and ranking.scope is null %} Ajoute des éléments depuis les pages <a href="{{ path('app_artist_index') }}" class="underline">artistes</a> et albums.{% endif %}</p>
-        {% else %}
-            <div class="flex flex-col gap-2">
-                {% if can_edit %}
-                    <p class="text-[13px] text-ink-muted" data-sortable-status aria-live="polite">Glisse les éléments par leur numéro<span class="max-sm:hidden">, ou utilise les flèches,</span> pour changer l'ordre.</p>
-                {% endif %}
-                <ol class="rank-list flex flex-col gap-2"
+        <div class="{{ pool ? 'grid items-start gap-4 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]' }}">
+            {% if pool %}
+                <aside class="card flex flex-col gap-3 p-3 md:sticky md:top-4" aria-labelledby="pool-title">
+                    <h2 id="pool-title" class="font-bold">{{ ranking.itemKind.label }}{{ ranking.scope ? ' de ' ~ ranking.scope.name }}</h2>
+                    {# Permanent : le rafraîchissement après un ajout ne vide pas la recherche en cours. #}
+                    <form id="ranking-pool-search" method="get" action="{{ path('app_ranking_pool', {id: ranking.id}) }}" role="search"
+                          data-turbo-frame="ranking-pool" data-turbo-permanent data-controller="search">
+                        <input type="search" name="q" placeholder="Rechercher" aria-label="Rechercher dans le catalogue" autocomplete="off" class="w-full" data-action="search#submit">
+                    </form>
+                    <div class="max-h-[45vh] overflow-y-auto md:max-h-[calc(100vh-10rem)]">
+                        {{ include('ranking/_pool.html.twig') }}
+                    </div>
+                </aside>
+            {% endif %}
+
+            {% if items is empty and not pool %}
+                <p>Ce classement est vide.{% if can_edit and ranking.scope is null %} Ajoute des éléments depuis les pages <a href="{{ path('app_artist_index') }}" class="underline">artistes</a> et albums.{% endif %}</p>
+            {% else %}
+                <div class="flex flex-col gap-2">
+                    {% if ranking.maxSize %}
+                        <p class="font-mono text-sm font-medium">{{ items|length }} / {{ ranking.maxSize }}{{ ranking.full and can_edit ? ' · complet : retire un élément pour en ajouter un autre' }}</p>
+                    {% endif %}
                     {% if can_edit %}
-                        data-controller="sortable"
-                        data-sortable-url-value="{{ path('app_ranking_order', {id: ranking.id}) }}"
-                        data-sortable-token-value="{{ token }}"
-                    {% endif %}>
-                    {% for item in items %}
-                        <li class="flex h-[62px] items-center gap-2.5 rounded-control border-2 border-ink bg-card pr-1.5" {% if can_edit %}data-item-id="{{ item.id }}"{% endif %}>
-                            <span data-rank
-                                  {% if can_edit %}data-sortable-handle title="Glisser pour déplacer"{% endif %}
-                                  class="grid w-[46px] shrink-0 place-items-center self-stretch rounded-l-[10px] border-r-2 border-ink bg-sunken font-mono text-[17px] font-medium {{ can_edit ? 'cursor-grab touch-none select-none' }}">
-                                <span data-sortable-position>{{ '%02d'|format(loop.index) }}</span>
-                            </span>
-                            <div class="min-w-0 flex-1">{{ include('catalog/_item.html.twig', {item: item}) }}</div>
-                            <div class="flex shrink-0 gap-1">
-                                {# De quoi se rafraîchir la mémoire avant de trancher. #}
-                                {% if item.kind.value == 'track' %}
-                                    {{ include('catalog/_preview_button.html.twig', {track: item, class: ''}) }}
-                                {% elseif item.kind.value == 'album' %}
-                                    {{ include('catalog/_tracklist_button.html.twig', {album: item, class: ''}) }}
-                                {% endif %}
-                                {% if can_edit %}
-                                    <button type="button" class="btn-icon max-sm:hidden" data-action="sortable#moveUp" aria-label="Monter {{ item.name }}">↑</button>
-                                    <button type="button" class="btn-icon max-sm:hidden" data-action="sortable#moveDown" aria-label="Descendre {{ item.name }}">↓</button>
-                                    <details class="relative">
-                                        <summary class="btn-icon list-none [&::-webkit-details-marker]:hidden" aria-label="Autres actions pour {{ item.name }}">⋯</summary>
-                                        <div class="card absolute top-full right-0 z-10 mt-1 flex w-max flex-col p-1 text-sm font-semibold">
-                                            <form method="post" action="{{ path('app_duel_place_item', {id: ranking.id}) }}">
-                                                <input type="hidden" name="itemId" value="{{ item.id }}">
-                                                <input type="hidden" name="_token" value="{{ token }}">
-                                                <button type="submit" class="w-full cursor-pointer rounded-tile px-3 py-2.5 text-left hover:bg-sunken">Replacer par duel</button>
-                                            </form>
-                                            <form method="post" action="{{ path('app_ranking_remove_item', {id: ranking.id}) }}">
-                                                <input type="hidden" name="itemId" value="{{ item.id }}">
-                                                <input type="hidden" name="_token" value="{{ token }}">
-                                                <button type="submit" class="w-full cursor-pointer rounded-tile px-3 py-2.5 text-left hover:bg-sunken">Retirer du classement</button>
-                                            </form>
-                                        </div>
-                                    </details>
-                                {% endif %}
-                            </div>
-                        </li>
-                    {% endfor %}
-                </ol>
-            </div>
-        {% endif %}
+                        <p class="text-[13px] text-ink-muted" data-sortable-status aria-live="polite">
+                            {%- if pool and items is empty -%}
+                                Glisse des éléments ici depuis le catalogue, ou ajoute-les avec +.
+                            {%- else -%}
+                                Glisse les éléments par leur numéro<span class="max-sm:hidden">, ou utilise les flèches,</span> pour changer l'ordre.
+                            {%- endif -%}
+                        </p>
+                    {% endif %}
+                    <ol class="rank-list flex flex-col gap-2 {{ pool and items is empty ? 'min-h-[62px] rounded-control border-2 border-dashed border-rule' }}"
+                        {% if can_edit %}
+                            data-controller="sortable"
+                            data-sortable-url-value="{{ path('app_ranking_order', {id: ranking.id}) }}"
+                            data-sortable-token-value="{{ token }}"
+                            {% if pool %}
+                                data-sortable-group-value="ranking-{{ ranking.id }}"
+                                data-sortable-full-value="{{ ranking.full ? 'true' : 'false' }}"
+                            {% endif %}
+                        {% endif %}>
+                        {% for item in items %}
+                            <li class="flex h-[62px] items-center gap-2.5 rounded-control border-2 border-ink bg-card pr-1.5" {% if can_edit %}data-item-id="{{ item.id }}"{% endif %}>
+                                <span data-rank
+                                      {% if can_edit %}data-sortable-handle title="Glisser pour déplacer"{% endif %}
+                                      class="grid w-[46px] shrink-0 place-items-center self-stretch rounded-l-[10px] border-r-2 border-ink bg-sunken font-mono text-[17px] font-medium {{ can_edit ? 'cursor-grab touch-none select-none' }}">
+                                    <span data-sortable-position>{{ '%02d'|format(loop.index) }}</span>
+                                </span>
+                                <div class="min-w-0 flex-1">{{ include('catalog/_item.html.twig', {item: item}) }}</div>
+                                <div class="flex shrink-0 gap-1">
+                                    {# De quoi se rafraîchir la mémoire avant de trancher. #}
+                                    {% if item.kind.value == 'track' %}
+                                        {{ include('catalog/_preview_button.html.twig', {track: item, class: ''}) }}
+                                    {% elseif item.kind.value == 'album' %}
+                                        {{ include('catalog/_tracklist_button.html.twig', {album: item, class: ''}) }}
+                                    {% endif %}
+                                    {% if can_edit %}
+                                        <button type="button" class="btn-icon max-sm:hidden" data-action="sortable#moveUp" aria-label="Monter {{ item.name }}">↑</button>
+                                        <button type="button" class="btn-icon max-sm:hidden" data-action="sortable#moveDown" aria-label="Descendre {{ item.name }}">↓</button>
+                                        <details class="relative">
+                                            <summary class="btn-icon list-none [&::-webkit-details-marker]:hidden" aria-label="Autres actions pour {{ item.name }}">⋯</summary>
+                                            <div class="card absolute top-full right-0 z-10 mt-1 flex w-max flex-col p-1 text-sm font-semibold">
+                                                <form method="post" action="{{ path('app_duel_place_item', {id: ranking.id}) }}">
+                                                    <input type="hidden" name="itemId" value="{{ item.id }}">
+                                                    <input type="hidden" name="_token" value="{{ token }}">
+                                                    <button type="submit" class="w-full cursor-pointer rounded-tile px-3 py-2.5 text-left hover:bg-sunken">Replacer par duel</button>
+                                                </form>
+                                                <form method="post" action="{{ path('app_ranking_remove_item', {id: ranking.id}) }}">
+                                                    <input type="hidden" name="itemId" value="{{ item.id }}">
+                                                    <input type="hidden" name="_token" value="{{ token }}">
+                                                    <button type="submit" class="w-full cursor-pointer rounded-tile px-3 py-2.5 text-left hover:bg-sunken">Retirer du classement</button>
+                                                </form>
+                                            </div>
+                                        </details>
+                                    {% endif %}
+                                </div>
+                            </li>
+                        {% endfor %}
+                    </ol>
+                </div>
+            {% endif %}
+        </div>
     </div>
 {% endblock %}
