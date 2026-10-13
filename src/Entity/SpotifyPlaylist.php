@@ -11,6 +11,10 @@ use Doctrine\ORM\Mapping as ORM;
  *
  * Trois états : en attente (demandée, pas encore faite), à jour à syncedAt, ou en échec
  * (error). Une nouvelle demande efface l'erreur.
+ *
+ * queued dit si un message de synchro attend dans la file : les modifications suivantes
+ * s'y rattachent au lieu d'en envoyer un autre. Le worker le remet à false en commençant,
+ * avant de lire le classement : une modification pendant la synchro en relance une.
  */
 #[ORM\Entity(repositoryClass: SpotifyPlaylistRepository::class)]
 class SpotifyPlaylist
@@ -45,6 +49,9 @@ class SpotifyPlaylist
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $error = null;
+
+    #[ORM\Column]
+    private bool $queued = false;
 
     public function __construct(
         #[ORM\OneToOne]
@@ -117,10 +124,37 @@ class SpotifyPlaylist
         return null !== $this->syncedAt && $this->ranking->getUpdatedAt() > $this->syncedAt;
     }
 
-    public function request(\DateTimeImmutable $now): static
+    public function isQueued(): bool
+    {
+        return $this->queued;
+    }
+
+    /**
+     * @param bool $force envoyer un message même si un autre attend déjà (demande manuelle :
+     *                    rattrape un message perdu)
+     *
+     * @return bool true s'il faut envoyer un message de synchro
+     */
+    public function request(\DateTimeImmutable $now, bool $force = false): bool
     {
         $this->requestedAt = $now;
         $this->error = null;
+
+        if ($this->queued && !$force) {
+            return false;
+        }
+
+        $this->queued = true;
+
+        return true;
+    }
+
+    /**
+     * Le worker prend la demande en charge.
+     */
+    public function start(): static
+    {
+        $this->queued = false;
 
         return $this;
     }
@@ -134,11 +168,15 @@ class SpotifyPlaylist
         return $this;
     }
 
-    public function markSynced(string $snapshotId, int $missingCount, \DateTimeImmutable $now): static
+    /**
+     * @param \DateTimeImmutable $readAt moment où le classement a été lu : une modification
+     *                                   arrivée ensuite laisse la playlist en attente
+     */
+    public function markSynced(string $snapshotId, int $missingCount, \DateTimeImmutable $readAt): static
     {
         $this->snapshotId = $snapshotId;
         $this->missingCount = $missingCount;
-        $this->syncedAt = $now;
+        $this->syncedAt = $readAt;
         $this->error = null;
 
         return $this;

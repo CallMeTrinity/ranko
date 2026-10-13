@@ -3,7 +3,6 @@
 namespace App\MessageHandler;
 
 use App\Message\SyncRankingToSpotify;
-use App\Repository\RankingRepository;
 use App\Spotify\SpotifyApiException;
 use App\Spotify\SpotifyPlaylistSync;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
@@ -13,20 +12,14 @@ use Symfony\Component\Messenger\Exception\RecoverableMessageHandlingException;
 final class SyncRankingToSpotifyHandler
 {
     public function __construct(
-        private readonly RankingRepository $rankings,
         private readonly SpotifyPlaylistSync $sync,
     ) {
     }
 
     public function __invoke(SyncRankingToSpotify $message): void
     {
-        $ranking = $this->rankings->findWithItems($message->rankingId);
-        if (null === $ranking) {
-            return;
-        }
-
         try {
-            $this->sync->sync($ranking);
+            $this->sync->sync($message->rankingId);
         } catch (SpotifyApiException $exception) {
             // Seuls les échecs passagers arrivent ici. Après une 429, Spotify dit combien
             // attendre ; sinon, backoff du transport. forceRetry: false garde la limite

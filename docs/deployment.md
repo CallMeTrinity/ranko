@@ -137,7 +137,10 @@ Ranko reste ouvert à tous ; l'admin attribue les places Spotify une par une.
    retirer aussi son email du dashboard pour libérer la place chez Spotify.
 
 La synchro passe par la file Messenger (une recherche par titre la première fois) :
-elle est faite au prochain passage du worker (voir plus haut). Les titres sont
+elle est faite au prochain passage du worker (voir plus haut). L'utilisateur crée la
+playlist une première fois ; ensuite, chaque modification du classement relance une
+synchro (`SpotifyAutoSyncListener`). Les modifications faites pendant qu'un message
+attend dans la file s'y rattachent : un duel complet ne coûte qu'une synchro. Les titres sont
 retrouvés par ISRC quand MusicBrainz en donne un, sinon par recherche texte. Les
 albums importés avant l'ajout des ISRC n'en ont pas : « Importer les titres » dans la
 liste des albums les récupère.

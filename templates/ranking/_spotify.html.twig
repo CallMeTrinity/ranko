@@ -36,6 +36,13 @@
                 <a href="{{ playlist.url }}" class="btn" target="_blank" rel="noopener">Ouvrir dans Spotify</a>
             {% endif %}
         </div>
-        <p class="text-[13px] text-ink-muted">Ranko fait foi : chaque synchro réécrit la playlist, une modification faite dans Spotify sera écrasée.</p>
+        <p class="text-[13px] text-ink-muted">
+            {%- if playlist and playlist.playlistId -%}
+                La playlist suit le classement : chaque modification la met à jour, en quelques minutes.
+            {%- else -%}
+                Une fois créée, la playlist suivra le classement : chaque modification la mettra à jour.
+            {%- endif %}
+            Ranko fait foi : une modification faite dans Spotify sera écrasée.
+        </p>
     {% endif %}
 </section>

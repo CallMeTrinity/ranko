@@ -8,6 +8,7 @@ use App\Entity\SpotifyPlaylist;
 use App\Entity\Track;
 use App\Enum\CatalogItemKind;
 use App\Message\SyncRankingToSpotify;
+use App\Repository\RankingRepository;
 use App\Repository\SpotifyAccountRepository;
 use App\Repository\SpotifyPlaylistRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -29,6 +30,7 @@ final class SpotifyPlaylistSync
         private readonly SpotifyApi $api,
         private readonly SpotifyAccountRepository $accounts,
         private readonly SpotifyPlaylistRepository $playlists,
+        private readonly RankingRepository $rankings,
         private readonly EntityManagerInterface $entityManager,
         private readonly MessageBusInterface $bus,
         private readonly UrlGeneratorInterface $urlGenerator,
@@ -43,8 +45,8 @@ final class SpotifyPlaylistSync
     }
 
     /**
-     * La recherche des titres peut prendre une requête par titre : la synchro passe par
-     * la file Messenger plutôt que de faire attendre la page.
+     * Demande manuelle. La recherche des titres peut prendre une requête par titre : la
+     * synchro passe par la file Messenger plutôt que de faire attendre la page.
      */
     public function request(Ranking $ranking): SpotifyPlaylist
     {
@@ -58,7 +60,7 @@ final class SpotifyPlaylistSync
             $this->entityManager->persist($playlist);
         }
 
-        $playlist->request($this->clock->now());
+        $playlist->request($this->clock->now(), force: true);
         $this->entityManager->flush();
 
         $this->bus->dispatch(new SyncRankingToSpotify((int) $ranking->getId()));
@@ -73,10 +75,21 @@ final class SpotifyPlaylistSync
      *
      * @throws SpotifyApiException si l'échec est passager (SpotifyApiException::isRetryable())
      */
-    public function sync(Ranking $ranking): void
+    public function sync(int $rankingId): void
     {
-        $playlist = $this->playlists->findOneByRanking($ranking);
+        $playlist = $this->playlists->findOneBy(['ranking' => $rankingId]);
         if (null === $playlist) {
+            return;
+        }
+
+        // Avant de lire le classement : une modification arrivée ensuite enverra son propre
+        // message au lieu de se rattacher à celui-ci.
+        $playlist->start();
+        $readAt = $this->clock->now();
+        $this->entityManager->flush();
+
+        $ranking = $this->rankings->findWithItems($rankingId);
+        if (null === $ranking) {
             return;
         }
 
@@ -89,7 +102,7 @@ final class SpotifyPlaylistSync
         }
 
         try {
-            $this->push($ranking, $playlist, $account);
+            $this->push($ranking, $playlist, $account, $readAt);
         } catch (SpotifyApiException $exception) {
             // Le message brut de Spotify : celui affiché à l'utilisateur le simplifie.
             $this->logger->warning('Synchro Spotify du classement {ranking} : {message}', ['ranking' => $ranking->getId(), 'message' => $exception->getMessage(), 'exception' => $exception]);
@@ -103,7 +116,7 @@ final class SpotifyPlaylistSync
         }
     }
 
-    private function push(Ranking $ranking, SpotifyPlaylist $playlist, SpotifyAccount $account): void
+    private function push(Ranking $ranking, SpotifyPlaylist $playlist, SpotifyAccount $account, \DateTimeImmutable $readAt): void
     {
         $token = $this->connector->accessToken($account);
 
@@ -139,7 +152,7 @@ final class SpotifyPlaylistSync
             $snapshotId = $this->api->replacePlaylistItems($token, (string) $playlist->getPlaylistId(), $uris);
         }
 
-        $playlist->markSynced($snapshotId, $missing, $this->clock->now());
+        $playlist->markSynced($snapshotId, $missing, $readAt);
         $this->entityManager->flush();
     }
 
