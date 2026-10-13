@@ -6,6 +6,8 @@ use App\Entity\User;
 use App\Enum\CatalogItemKind;
 use App\Form\ProfileFormType;
 use App\Profile\ProfileBuilder;
+use App\Repository\SpotifyAccountRepository;
+use App\Spotify\SpotifyAccess;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bridge\Doctrine\Attribute\MapEntity;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -38,7 +40,7 @@ final class ProfileController extends AbstractController
 
     #[Route('/profile/edit', name: 'app_profile_edit', methods: ['GET', 'POST'])]
     #[IsGranted('ROLE_USER')]
-    public function edit(#[CurrentUser] User $user, Request $request, EntityManagerInterface $entityManager): Response
+    public function edit(#[CurrentUser] User $user, Request $request, EntityManagerInterface $entityManager, SpotifyAccountRepository $spotifyAccounts): Response
     {
         $form = $this->createForm(ProfileFormType::class, $user);
         $form->handleRequest($request);
@@ -50,6 +52,9 @@ final class ProfileController extends AbstractController
             return $this->redirectToRoute('app_profile', ['username' => $user->getUsername()]);
         }
 
-        return $this->render('profile/edit.html.twig', ['form' => $form]);
+        return $this->render('profile/edit.html.twig', [
+            'form' => $form,
+            'spotify_account' => $this->isGranted(SpotifyAccess::ROLE) ? $spotifyAccounts->findOneByUser($user) : null,
+        ]);
     }
 }

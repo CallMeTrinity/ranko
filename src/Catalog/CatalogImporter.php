@@ -177,7 +177,8 @@ final class CatalogImporter
             ->setName($data->title)
             ->setDiscNumber($data->discNumber)
             ->setPosition($data->position)
-            ->setDurationMs($data->durationMs);
+            ->setDurationMs($data->durationMs)
+            ->setIsrc($data->isrc);
     }
 
     private function externalIdOf(Artist|Album $item): string

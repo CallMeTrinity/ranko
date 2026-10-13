@@ -15,5 +15,25 @@
             {{ form_row(form.bio, field) }}
             <button type="submit" class="btn btn-lg btn-primary">Enregistrer</button>
         {{ form_end(form) }}
+
+        {% if is_granted('ROLE_SPOTIFY') %}
+            <section class="card flex flex-col gap-3 p-4" aria-labelledby="spotify-title" data-spotify>
+                <h2 id="spotify-title" class="font-bold">Spotify</h2>
+                {% if spotify_account %}
+                    <p class="text-sm">Connecté en tant que <strong>{{ spotify_account.label }}</strong>. Tes classements de titres peuvent devenir des playlists.</p>
+                    <div class="flex flex-wrap gap-2">
+                        {# Repasse par le consentement Spotify : utile quand Ranko demande un scope de plus. #}
+                        <a href="{{ path('app_spotify_connect') }}" class="btn" data-turbo="false">Reconnecter</a>
+                        <form method="post" action="{{ path('app_spotify_disconnect') }}">
+                            <input type="hidden" name="_token" value="{{ csrf_token('spotify-disconnect') }}">
+                            <button type="submit" class="btn">Déconnecter Spotify</button>
+                        </form>
+                    </div>
+                {% else %}
+                    <p class="text-sm">Connecte ton compte Spotify pour copier tes classements de titres dans des playlists.</p>
+                    <div><a href="{{ path('app_spotify_connect') }}" class="btn btn-primary" data-turbo="false">Connecter Spotify</a></div>
+                {% endif %}
+            </section>
+        {% endif %}
     </div>
 {% endblock %}

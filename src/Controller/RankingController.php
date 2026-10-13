@@ -17,7 +17,11 @@ use App\Ranking\Comparison\RankingComparator;
 use App\Ranking\RankingManager;
 use App\Repository\CatalogItemRepository;
 use App\Repository\RankingRepository;
+use App\Repository\SpotifyAccountRepository;
+use App\Repository\SpotifyPlaylistRepository;
 use App\Security\Voter\RankingVoter;
+use App\Spotify\SpotifyAccess;
+use App\Spotify\SpotifyPlaylistSync;
 use Symfony\Bridge\Doctrine\Attribute\MapEntity;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\ExpressionLanguage\Expression;
@@ -118,10 +122,17 @@ final class RankingController extends AbstractController
 
     #[Route('/{id<\d+>}', name: 'app_ranking_show', methods: ['GET'])]
     #[IsGranted(RankingVoter::VIEW, 'ranking')]
-    public function show(#[MapEntity(expr: 'repository.findWithItems(id)')] Ranking $ranking, DuelManager $duels, RankingRepository $rankings): Response
-    {
+    public function show(
+        #[MapEntity(expr: 'repository.findWithItems(id)')] Ranking $ranking,
+        DuelManager $duels,
+        RankingRepository $rankings,
+        SpotifyPlaylistSync $spotifySync,
+        SpotifyPlaylistRepository $spotifyPlaylists,
+        SpotifyAccountRepository $spotifyAccounts,
+    ): Response {
         $canEdit = $this->isGranted(RankingVoter::EDIT, $ranking);
         $viewer = $this->getUser();
+        $withSpotify = $canEdit && $viewer instanceof User && $this->isGranted(SpotifyAccess::ROLE) && $spotifySync->supports($ranking);
 
         return $this->render('ranking/show.html.twig', [
             'ranking' => $ranking,
@@ -132,6 +143,10 @@ final class RankingController extends AbstractController
             // Rendu dans la page plutôt que chargé par la frame : voir ranking/_pool.html.twig.
             'pool' => $canEdit && $ranking->isCustom() ? $this->poolContent($ranking, '', null, self::POOL_PAGE) : null,
             'pool_filters' => $canEdit && $ranking->isCustom() ? $this->poolFilters($ranking) : [],
+            'spotify' => $withSpotify ? [
+                'connected' => null !== $spotifyAccounts->findOneByUser($viewer),
+                'playlist' => $spotifyPlaylists->findOneByRanking($ranking),
+            ] : null,
         ]);
     }
 

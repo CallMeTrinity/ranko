@@ -1,0 +1,41 @@
+{# Synchro du classement vers une playlist Spotify. Variables : ranking, spotify {connected, playlist}, token. #}
+{% set playlist = spotify.playlist %}
+<section class="card flex flex-col gap-3 p-4" aria-labelledby="spotify-title" data-spotify>
+    <h2 id="spotify-title" class="font-bold">Playlist Spotify</h2>
+
+    {% if not spotify.connected %}
+        <p class="text-sm">Connecte ton compte Spotify pour copier ce classement dans une playlist.</p>
+        <div><a href="{{ path('app_spotify_connect', {ranking: ranking.id}) }}" class="btn btn-primary" data-turbo="false">Connecter Spotify</a></div>
+    {% else %}
+        {% if playlist %}
+            <p class="text-sm" role="status">
+                {%- if playlist.error -%}
+                    {{ playlist.error }}
+                {%- elseif playlist.pending -%}
+                    Synchro en cours : la playlist sera à jour dans quelques minutes.
+                {%- else -%}
+                    À jour le {{ playlist.syncedAt|date('d/m/Y à H:i') }}.
+                    {%- if playlist.outdated %} Le classement a changé depuis.{% endif -%}
+                {%- endif -%}
+            </p>
+            {% if playlist.syncedAt and playlist.missingCount > 0 %}
+                <p class="text-[13px] text-ink-muted">{{ playlist.missingCount }} titre{{ playlist.missingCount > 1 ? 's' }} introuvable{{ playlist.missingCount > 1 ? 's' }} sur Spotify, absent{{ playlist.missingCount > 1 ? 's' }} de la playlist.</p>
+            {% endif %}
+        {% else %}
+            <p class="text-sm">Crée une playlist privée dans ton compte Spotify, dans l'ordre de ce classement.</p>
+        {% endif %}
+
+        <div class="flex flex-wrap gap-2">
+            {% if ranking.entries|length > 0 %}
+                <form method="post" action="{{ path('app_ranking_spotify', {id: ranking.id}) }}">
+                    <input type="hidden" name="_token" value="{{ token }}">
+                    <button type="submit" class="btn btn-primary">{{ playlist and playlist.playlistId ? 'Mettre à jour la playlist' : 'Créer la playlist' }}</button>
+                </form>
+            {% endif %}
+            {% if playlist and playlist.url %}
+                <a href="{{ playlist.url }}" class="btn" target="_blank" rel="noopener">Ouvrir dans Spotify</a>
+            {% endif %}
+        </div>
+        <p class="text-[13px] text-ink-muted">Ranko fait foi : chaque synchro réécrit la playlist, une modification faite dans Spotify sera écrasée.</p>
+    {% endif %}
+</section>

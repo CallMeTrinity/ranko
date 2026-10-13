@@ -89,6 +89,8 @@ final class CatalogImporterTest extends KernelTestCase
         self::assertCount(12, $tracks, 'Un second import ne duplique pas les titres');
         self::assertSame('Airbag', $tracks[0]->getName());
         self::assertSame('4:44', $tracks[0]->getFormattedDuration());
+        self::assertSame(CatalogHttpMock::AIRBAG_ISRC, $tracks[0]->getIsrc());
+        self::assertNull($tracks[1]->getIsrc(), 'Pas d\'ISRC chez MusicBrainz pour ce titre');
         self::assertSame(CatalogHttpMock::OK_COMPUTER_FIRST_RELEASE, $okComputer->getExternalId('musicbrainz-edition'));
         self::assertNotNull($okComputer->getCoverUrl());
         self::assertNotNull($okComputer->getCoverPath());

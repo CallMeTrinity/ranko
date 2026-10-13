@@ -1,0 +1,31 @@
+{
+    "tracks": {
+        "href": "https://api.spotify.com/v1/search?offset=0&limit=10&query=Airbag&type=track",
+        "limit": 10,
+        "offset": 0,
+        "total": 2,
+        "items": [
+            {
+                "id": "fixtureCoverAirbag0000",
+                "name": "Airbag",
+                "uri": "spotify:track:fixtureCoverAirbag0000",
+                "artists": [{"id": "fixtureCoverArtist", "name": "Cover Band"}],
+                "album": {"id": "fixtureCoverAlbum", "name": "Covers"}
+            },
+            {
+                "id": "fixtureAirbag000000000",
+                "name": "Airbag - Remastered",
+                "uri": "spotify:track:fixtureAirbagRemaster00",
+                "artists": [{"id": "4Z8W4fKeB5YxbusRsdQVPb", "name": "Radiohead"}],
+                "album": {"id": "fixtureOkComputerOknotok", "name": "OK Computer OKNOTOK 1997 2017"}
+            },
+            {
+                "id": "fixtureAirbag000000000",
+                "name": "Airbag",
+                "uri": "spotify:track:fixtureAirbag000000000",
+                "artists": [{"id": "4Z8W4fKeB5YxbusRsdQVPb", "name": "Radiohead"}],
+                "album": {"id": "fixtureOkComputer", "name": "OK Computer"}
+            }
+        ]
+    }
+}

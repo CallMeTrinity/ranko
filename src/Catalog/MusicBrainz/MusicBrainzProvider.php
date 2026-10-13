@@ -103,7 +103,8 @@ final class MusicBrainzProvider implements CatalogProviderInterface
             }
         }
 
-        $release = $this->get('release/'.$editionId, ['inc' => 'recordings'], 'release');
+        // isrcs : code international d'un enregistrement, qui sert à le retrouver chez Spotify.
+        $release = $this->get('release/'.$editionId, ['inc' => 'recordings+isrcs'], 'release');
 
         $tracks = [];
         foreach ($release['media'] ?? [] as $medium) {
@@ -114,6 +115,7 @@ final class MusicBrainzProvider implements CatalogProviderInterface
                     discNumber: (int) $medium['position'],
                     position: (int) $track['position'],
                     durationMs: $track['length'] ?? $track['recording']['length'] ?? null,
+                    isrc: $track['recording']['isrcs'][0] ?? null,
                 );
             }
         }
@@ -171,7 +173,7 @@ final class MusicBrainzProvider implements CatalogProviderInterface
         do {
             $page = $this->get('release', [
                 'release-group' => $albumExternalId,
-                'inc' => 'recordings',
+                'inc' => 'recordings+isrcs',
                 'limit' => self::PAGE_SIZE,
                 'offset' => $offset,
             ], 'release-group', $albumExternalId);
@@ -199,6 +201,7 @@ final class MusicBrainzProvider implements CatalogProviderInterface
                         discNumber: 1,
                         position: \count($tracks) + 1,
                         durationMs: $track['length'] ?? $track['recording']['length'] ?? null,
+                        isrc: $track['recording']['isrcs'][0] ?? null,
                     );
                 }
             }

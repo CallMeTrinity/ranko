@@ -103,6 +103,45 @@ bin/console messenger:failed:retry
 Sur un VPS, on peut se passer de l'URL et lancer un vrai worker permanent
 (`bin/console messenger:consume async`) sous systemd ou Supervisor.
 
+## Synchro Spotify
+
+Un classement de titres peut devenir une playlist Spotify privée, dans le compte de
+son propriétaire. Synchro à sens unique : Ranko fait foi, chaque synchro réécrit la
+playlist.
+
+**Limite de Spotify** : une app en Development Mode n'accepte que 5 comptes, ajoutés à
+la main dans le dashboard Spotify, et le propriétaire de l'app doit avoir Premium.
+Ranko reste ouvert à tous ; l'admin attribue les places Spotify une par une.
+
+1. Sur https://developer.spotify.com/dashboard, créer une app (API : Web API) et
+   déclarer les Redirect URIs, à l'identique :
+   - prod : `https://<domaine>/spotify/callback` ;
+   - local : `http://127.0.0.1:8000/spotify/callback` (ou `https://` selon ce
+     qu'affiche `symfony serve`). Spotify refuse `localhost` : ouvrir l'app sur
+     `127.0.0.1`.
+2. Dans `.env.local` :
+
+   ```dotenv
+   SPOTIFY_CLIENT_ID=<Client ID>
+   SPOTIFY_CLIENT_SECRET=<Client secret>
+   ```
+
+3. Pour chaque personne (toi compris) :
+   - dashboard Spotify > User Management : ajouter le nom et l'email **de son compte
+     Spotify** (pas forcément celui de Ranko) ;
+   - back-office Ranko > Utilisateurs : « Activer Spotify ». Le titre de la page
+     affiche les places utilisées (`SPOTIFY_MAX_USERS`, 5 par défaut).
+
+   Oublier l'étape Spotify : la personne se connecte, mais Spotify répond 403 et Ranko
+   affiche « compte pas autorisé ». Retirer l'accès dans Ranko supprime ses tokens ;
+   retirer aussi son email du dashboard pour libérer la place chez Spotify.
+
+La synchro passe par la file Messenger (une recherche par titre la première fois) :
+elle est faite au prochain passage du worker (voir plus haut). Les titres sont
+retrouvés par ISRC quand MusicBrainz en donne un, sinon par recherche texte. Les
+albums importés avant l'ajout des ISRC n'en ont pas : « Importer les titres » dans la
+liste des albums les récupère.
+
 ## Premier administrateur
 
 ```bash

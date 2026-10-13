@@ -1,0 +1,17 @@
+# Synchro des classements de titres vers des playlists Spotify (App\Spotify).
+framework:
+    http_client:
+        scoped_clients:
+            # OAuth : échange du code et rafraîchissement des tokens, authentifiés par l'app.
+            spotify_accounts.client:
+                base_uri: 'https://accounts.spotify.com/'
+                auth_basic: '%env(SPOTIFY_CLIENT_ID)%:%env(SPOTIFY_CLIENT_SECRET)%'
+                headers:
+                    Accept: 'application/json'
+                timeout: 10
+            # Web API, appelée avec le token de l'utilisateur (header Authorization par requête).
+            spotify.client:
+                base_uri: 'https://api.spotify.com/v1/'
+                headers:
+                    Accept: 'application/json'
+                timeout: 10

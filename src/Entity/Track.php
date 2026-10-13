@@ -18,6 +18,10 @@ class Track extends CatalogItem
     #[ORM\Column(nullable: true)]
     private ?int $durationMs = null;
 
+    /** International Standard Recording Code ("GBAYE9700136"), pour retrouver le titre chez Spotify. */
+    #[ORM\Column(length: 12, nullable: true)]
+    private ?string $isrc = null;
+
     public function __construct(
         #[ORM\ManyToOne(inversedBy: 'tracks')]
         #[ORM\JoinColumn(nullable: false)]
@@ -74,6 +78,18 @@ class Track extends CatalogItem
     public function setDurationMs(?int $durationMs): static
     {
         $this->durationMs = $durationMs;
+
+        return $this;
+    }
+
+    public function getIsrc(): ?string
+    {
+        return $this->isrc;
+    }
+
+    public function setIsrc(?string $isrc): static
+    {
+        $this->isrc = $isrc;
 
         return $this;
     }

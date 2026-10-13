@@ -32,6 +32,9 @@ final class DashboardController extends AbstractDashboardController
         yield MenuItem::linkTo(AlbumCrudController::class, 'Albums', 'fa fa-compact-disc');
         yield MenuItem::linkTo(TrackCrudController::class, 'Titres', 'fa fa-music');
 
+        yield MenuItem::section('Communauté');
+        yield MenuItem::linkTo(UserCrudController::class, 'Utilisateurs', 'fa fa-users');
+
         yield MenuItem::section();
         yield MenuItem::linkToRoute('Retour au site', 'fa fa-arrow-left', 'app_home');
     }

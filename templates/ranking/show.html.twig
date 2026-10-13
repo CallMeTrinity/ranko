@@ -91,6 +91,10 @@
             </div>
         {% endif %}
 
+        {% if spotify %}
+            {{ include('ranking/_spotify.html.twig') }}
+        {% endif %}
+
         {% if comparable is not empty %}
             <div class="flex flex-wrap items-center gap-2">
                 <span class="text-sm font-semibold">Comparer avec :</span>

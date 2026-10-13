@@ -20,6 +20,20 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
     }
 
     /**
+     * Utilisateurs qui ont reçu ce rôle explicitement (pas par la hiérarchie des rôles).
+     */
+    public function countWithRole(string $role): int
+    {
+        return (int) $this->createQueryBuilder('u')
+            ->select('COUNT(u.id)')
+            // roles est une colonne JSON : on cherche la chaîne entre guillemets.
+            ->where('u.roles LIKE :role')
+            ->setParameter('role', '%"'.$role.'"%')
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    /**
      * Rehash transparent du mot de passe quand l'algorithme évolue.
      */
     public function upgradePassword(PasswordAuthenticatedUserInterface $user, string $newHashedPassword): void

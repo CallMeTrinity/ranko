@@ -28,7 +28,10 @@
             "title": "Airbag",
             "length": 284400,
             "disambiguation": "",
-            "id": "4a7fea2e-545b-4c63-bc9a-9943cc3a29d7"
+            "id": "4a7fea2e-545b-4c63-bc9a-9943cc3a29d7",
+            "isrcs": [
+              "GBAYE9700136"
+            ]
           },
           "length": 284400
         },
