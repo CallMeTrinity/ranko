@@ -34,6 +34,10 @@ class SpotifyPlaylist
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $url = null;
 
+    /** Nom donné à la playlist dans Spotify : on ne la renomme que si le classement a changé de titre. */
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $name = null;
+
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $snapshotId = null;
 
@@ -84,6 +88,11 @@ class SpotifyPlaylist
     public function getUrl(): ?string
     {
         return $this->url;
+    }
+
+    public function getName(): ?string
+    {
+        return $this->name;
     }
 
     public function getSnapshotId(): ?string
@@ -159,11 +168,19 @@ class SpotifyPlaylist
         return $this;
     }
 
-    public function attach(string $playlistId, string $spotifyUserId, ?string $url): static
+    public function attach(string $playlistId, string $spotifyUserId, ?string $url, ?string $name = null): static
     {
         $this->playlistId = $playlistId;
         $this->spotifyUserId = $spotifyUserId;
         $this->url = $url;
+        $this->name = $name;
+
+        return $this;
+    }
+
+    public function rename(string $name): static
+    {
+        $this->name = $name;
 
         return $this;
     }

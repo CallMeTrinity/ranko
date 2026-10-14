@@ -94,6 +94,17 @@ final class SpotifyAutoSyncTest extends KernelTestCase
         self::assertSame([], $this->sentRankingIds());
     }
 
+    public function testRenamingTheListSyncsThePlaylist(): void
+    {
+        $album = self::createAlbum(self::createArtist(), trackNames: ['Airbag']);
+        $ranking = $this->manager->createCustom($this->owner, 'Pour courir', CatalogItemKind::Track, scope: $album);
+        $this->linkPlaylist($ranking);
+
+        $this->manager->rename($ranking, 'Pour le trail');
+
+        self::assertSame([$ranking->getId()], $this->sentRankingIds());
+    }
+
     public function testVisibilityIsNotAChangeOfTheList(): void
     {
         $ranking = $this->ranking();

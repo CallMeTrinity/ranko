@@ -64,6 +64,15 @@ final class SpotifyApiTest extends TestCase
         self::assertSame(['uris' => []], json_decode($replace['body'], true));
     }
 
+    public function testRenamesThePlaylistWithAnEmptyResponse(): void
+    {
+        $this->api(new MockResponse(''))->renamePlaylist('token', 'playlist1', 'Pour le trail');
+
+        [$rename] = $this->requests->getArrayCopy();
+        self::assertSame(['PUT', 'https://api.spotify.com/v1/playlists/playlist1'], [$rename['method'], $rename['url']]);
+        self::assertSame(['name' => 'Pour le trail'], json_decode($rename['body'], true));
+    }
+
     public function testRateLimitCarriesTheDelay(): void
     {
         $api = $this->api(new MockResponse('{"error": {"status": 429, "message": "API rate limit exceeded"}}', [

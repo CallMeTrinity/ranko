@@ -289,6 +289,40 @@ final class RankingControllerTest extends WebTestCase
         self::assertResponseStatusCodeSame(403);
     }
 
+    public function testRenameCustomList(): void
+    {
+        $ranking = self::getContainer()->get(RankingManager::class)->createCustom(self::createUser(), 'Pour courir', CatalogItemKind::Track);
+        $this->client->loginUser($ranking->getOwner());
+
+        $crawler = $this->client->request('GET', '/rankings/'.$ranking->getId());
+        $crawler = $this->client->click($crawler->selectLink('Renommer')->link());
+        self::assertSame('Pour courir', $crawler->filter('input[name="rename_ranking_form[name]"]')->attr('value'));
+
+        $this->client->submitForm('Enregistrer', ['rename_ranking_form[name]' => ' ']);
+        self::assertResponseStatusCodeSame(422);
+
+        $this->client->submitForm('Enregistrer', ['rename_ranking_form[name]' => 'Pour le trail']);
+        self::assertResponseRedirects('/rankings/'.$ranking->getId());
+        $this->client->followRedirect();
+        self::assertSelectorTextContains('h1', 'Pour le trail');
+    }
+
+    public function testOnlyTheOwnerRenamesAndOnlyACustomList(): void
+    {
+        $automatic = $this->ranking();
+        $custom = self::getContainer()->get(RankingManager::class)->createCustom($automatic->getOwner(), 'Pour courir', CatalogItemKind::Track);
+        $this->client->loginUser($automatic->getOwner());
+
+        $crawler = $this->client->request('GET', '/rankings/'.$automatic->getId());
+        self::assertCount(0, $crawler->selectLink('Renommer'), 'Le titre d\'un classement automatique découle de son périmètre');
+        $this->client->request('GET', '/rankings/'.$automatic->getId().'/rename');
+        self::assertResponseStatusCodeSame(404);
+
+        $this->client->loginUser(self::createUser('bob'));
+        $this->client->request('GET', '/rankings/'.$custom->getId().'/rename');
+        self::assertResponseStatusCodeSame(403);
+    }
+
     /**
      * Token "ranking-create" lu dans une page qui affiche le bouton de création.
      */

@@ -112,6 +112,30 @@ class Ranking
         return null !== $this->name;
     }
 
+    /**
+     * Seule une liste personnalisée a un nom à elle : le titre d'un classement automatique
+     * découle de son type et de son périmètre. Compte comme une modification, pour que la
+     * playlist Spotify suive.
+     */
+    public function rename(string $name): void
+    {
+        if (!$this->isCustom()) {
+            throw new \LogicException('Seule une liste personnalisée se renomme.');
+        }
+
+        $name = trim($name);
+        if ('' === $name) {
+            throw new \InvalidArgumentException('Une liste personnalisée doit avoir un nom.');
+        }
+
+        if ($name === $this->name) {
+            return;
+        }
+
+        $this->name = $name;
+        $this->updatedAt = new \DateTimeImmutable();
+    }
+
     public function getMaxSize(): ?int
     {
         return $this->maxSize;

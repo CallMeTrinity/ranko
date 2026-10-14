@@ -13,6 +13,8 @@ use App\Entity\User;
 use App\Enum\CatalogItemKind;
 use App\Form\CustomRankingFormType;
 use App\Form\Data\CustomRankingData;
+use App\Form\Data\RenameRankingData;
+use App\Form\RenameRankingFormType;
 use App\Ranking\Comparison\RankingComparator;
 use App\Ranking\RankingManager;
 use App\Repository\CatalogItemRepository;
@@ -230,6 +232,30 @@ final class RankingController extends AbstractController
         }
 
         return new Response(status: Response::HTTP_NO_CONTENT);
+    }
+
+    #[Route('/{id<\d+>}/rename', name: 'app_ranking_rename', methods: ['GET', 'POST'])]
+    #[IsGranted(RankingVoter::EDIT, 'ranking')]
+    public function rename(Ranking $ranking, Request $request): Response
+    {
+        if (!$ranking->isCustom()) {
+            throw $this->createNotFoundException('Seule une liste personnalisée se renomme.');
+        }
+
+        $data = new RenameRankingData($ranking->getName());
+        $form = $this->createForm(RenameRankingFormType::class, $data);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $this->manager->rename($ranking, (string) $data->name);
+
+            return $this->redirectToRoute('app_ranking_show', ['id' => $ranking->getId()]);
+        }
+
+        return $this->render('ranking/rename.html.twig', [
+            'ranking' => $ranking,
+            'form' => $form,
+        ]);
     }
 
     #[Route('/{id<\d+>}/visibility', name: 'app_ranking_visibility', methods: ['POST'])]

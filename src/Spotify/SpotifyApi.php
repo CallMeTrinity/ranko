@@ -136,6 +136,19 @@ final class SpotifyApi
     }
 
     /**
+     * Spotify répond 200 sans corps.
+     *
+     * @throws SpotifyApiException 404 si la playlist n'existe plus
+     */
+    public function renamePlaylist(string $accessToken, string $playlistId, string $name): void
+    {
+        $this->request($this->api, 'PUT', sprintf('playlists/%s', rawurlencode($playlistId)), [
+            'auth_bearer' => $accessToken,
+            'json' => ['name' => $name],
+        ]);
+    }
+
+    /**
      * Remplace tout le contenu de la playlist. Spotify accepte 100 titres par requête :
      * le premier lot remplace, les suivants s'ajoutent à la suite.
      *

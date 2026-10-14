@@ -1,0 +1,25 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Renommer {{ ranking.title }} · Ranko{% endblock %}
+
+{% block body %}
+    <div class="mx-auto flex max-w-sm flex-col gap-6">
+        <nav class="text-sm text-ink-muted">
+            <a href="{{ path('app_ranking_show', {id: ranking.id}) }}">‹ {{ ranking.title }}</a>
+        </nav>
+
+        <div class="flex flex-col gap-1.5">
+            <h1 class="text-[30px] font-bold tracking-[-0.6px]">Renommer la liste</h1>
+            <p class="text-sm text-ink-muted">Si la liste a une playlist Spotify, elle prend le nouveau nom à la prochaine synchro.</p>
+        </div>
+
+        {% set field = {row_attr: {class: 'flex flex-col gap-1.5 font-semibold'}, attr: {class: 'py-3 font-normal'}} %}
+        {{ form_start(form, {attr: {class: 'flex flex-col gap-4'}}) }}
+            {{ form_row(form.name, field) }}
+            <div class="flex flex-wrap gap-2">
+                <button type="submit" class="btn btn-lg btn-primary">Enregistrer</button>
+                <a href="{{ path('app_ranking_show', {id: ranking.id}) }}" class="btn btn-lg">Annuler</a>
+            </div>
+        {{ form_end(form) }}
+    </div>
+{% endblock %}

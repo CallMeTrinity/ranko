@@ -114,6 +114,12 @@ final class RankingManager
         $this->entityManager->flush();
     }
 
+    public function rename(Ranking $ranking, string $name): void
+    {
+        $ranking->rename($name);
+        $this->entityManager->flush();
+    }
+
     public function toggleVisibility(Ranking $ranking): void
     {
         $ranking->setVisibility($ranking->isPublic() ? Visibility::Private : Visibility::Public);

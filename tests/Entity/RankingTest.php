@@ -55,6 +55,28 @@ final class RankingTest extends TestCase
         $ranking->add($c);
     }
 
+    public function testRenameCustomListCountsAsAChange(): void
+    {
+        $ranking = new Ranking(new User('a@example.com', 'alice'), CatalogItemKind::Track, null, 'Pour courir');
+        $updatedAt = $ranking->getUpdatedAt();
+        usleep(1);
+
+        $ranking->rename('  Pour le trail  ');
+
+        self::assertSame('Pour le trail', $ranking->getTitle());
+        self::assertGreaterThan($updatedAt, $ranking->getUpdatedAt());
+
+        $this->expectException(\InvalidArgumentException::class);
+        $ranking->rename(' ');
+    }
+
+    public function testAutomaticRankingCannotBeRenamed(): void
+    {
+        $this->expectException(\LogicException::class);
+
+        (new Ranking(new User('a@example.com', 'alice'), CatalogItemKind::Album))->rename('Mes albums');
+    }
+
     /**
      * @return iterable<string, array{?string, ?int}>
      */

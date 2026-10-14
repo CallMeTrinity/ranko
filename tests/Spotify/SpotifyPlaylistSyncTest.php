@@ -97,6 +97,20 @@ final class SpotifyPlaylistSyncTest extends KernelTestCase
         self::assertGreaterThan(new \DateTimeImmutable('2026-10-13 12:00:00'), $account->getExpiresAt());
     }
 
+    public function testFollowsTheNameOfTheList(): void
+    {
+        $this->connect();
+        $ranking = $this->ranking(['Airbag'], name: 'Pour courir');
+        $this->sync($ranking);
+        self::assertSame('Pour courir', $this->playlist($ranking)->getName(), 'Nommée à la création');
+
+        $ranking->rename('Pour le trail');
+        $this->sync($ranking);
+
+        self::assertSame('Pour le trail', $this->playlist($ranking)->getName());
+        self::assertNull($this->playlist($ranking)->getError());
+    }
+
     public function testRecreatesAPlaylistDeletedInSpotify(): void
     {
         $this->connect();
@@ -174,14 +188,15 @@ final class SpotifyPlaylistSyncTest extends KernelTestCase
     }
 
     /**
-     * Titres de OK Computer, dans l'ordre donné. La synchro est déjà demandée.
+     * Titres de OK Computer, dans l'ordre donné, ou liste personnalisée si $name. La synchro
+     * est déjà demandée.
      *
      * @param list<string> $trackNames
      */
-    private function ranking(array $trackNames): Ranking
+    private function ranking(array $trackNames, ?string $name = null): Ranking
     {
         $album = self::createAlbum(self::createArtist(), trackNames: $trackNames);
-        $ranking = new Ranking($this->owner, CatalogItemKind::Track, $album);
+        $ranking = new Ranking($this->owner, CatalogItemKind::Track, $album, $name);
         foreach ($album->getTracks() as $track) {
             $ranking->add($track);
         }

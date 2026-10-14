@@ -73,6 +73,9 @@
                         <button type="button" class="btn" data-action="clipboard#copy" data-clipboard-target="button">Copier le lien</button>
                     {% endif %}
                     {% if can_edit %}
+                        {% if ranking.custom %}
+                            <a href="{{ path('app_ranking_rename', {id: ranking.id}) }}" class="btn">Renommer</a>
+                        {% endif %}
                         <form method="post" action="{{ path('app_ranking_visibility', {id: ranking.id}) }}">
                             <input type="hidden" name="_token" value="{{ token }}">
                             <button type="submit" class="btn">{{ ranking.public ? 'Rendre privé' : 'Rendre public' }}</button>
@@ -123,7 +126,9 @@
             </section>
         {% endif %}
 
-        <div class="{{ pool ? 'grid items-start gap-4 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]' }}">
+        {# grid-cols-1 (minmax(0, 1fr)) sur mobile : la colonne implicite (auto) prendrait la
+           largeur min-content de la liste, soit les noms tronqués en entier, et déborderait. #}
+        <div class="{{ pool ? 'grid grid-cols-1 items-start gap-4 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]' }}">
             {% if pool %}
                 {# Sur mobile, menu ouvert par le bas avec le bouton Ajouter (popover natif : Échap et
                    clic à côté le ferment). À partir de md, colonne fixe : on neutralise alors le style

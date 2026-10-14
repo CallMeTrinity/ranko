@@ -152,6 +152,12 @@ final class SpotifyPlaylistSync
             $snapshotId = $this->api->replacePlaylistItems($token, (string) $playlist->getPlaylistId(), $uris);
         }
 
+        // Après le remplacement : une playlist supprimée dans Spotify vient d'être recréée, avec le bon nom.
+        if ($playlist->getName() !== $ranking->getTitle()) {
+            $this->api->renamePlaylist($token, (string) $playlist->getPlaylistId(), $ranking->getTitle());
+            $playlist->rename($ranking->getTitle());
+        }
+
         $playlist->markSynced($snapshotId, $missing, $readAt);
         $this->entityManager->flush();
     }
@@ -164,7 +170,7 @@ final class SpotifyPlaylistSync
             $this->urlGenerator->generate('app_ranking_show', ['id' => $ranking->getId()], UrlGeneratorInterface::ABSOLUTE_URL),
         ));
 
-        $playlist->attach($created['id'], $account->getSpotifyUserId(), $created['url']);
+        $playlist->attach($created['id'], $account->getSpotifyUserId(), $created['url'], $ranking->getTitle());
         // Tout de suite : si la suite échoue, le prochain essai remplit cette playlist au lieu d'en créer une autre.
         $this->entityManager->flush();
     }
